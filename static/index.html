@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>openRMN — The independent retail media analytics layer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F5F5F4;
+  --bg-tertiary: #EAEAE8;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #F5F5F4;
+  --bg-dark: #2C2C2C;
+  --bg-darker: #1C1C1C;
+  --text-primary: #1C1C1C;
+  --text-secondary: #6B6B6B;
+  --text-tertiary: #9B9B9B;
+  --text-inverted: #FFFFFF;
+  --accent: #2752E7;
+  --accent-medium: #6B82EE;
+  --accent-light: #E8ECF8;
+  --accent-hover: #6B82EE;
+  --border: #D5D5D0;
+  --border-light: #E0E0DC;
+  --chart-amazon: #2752E7;
+  --chart-criteo: #6B6B6B;
+  --chart-unlimitail: #6B82EE;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+.serif { font-family: "Source Serif 4", Georgia, serif; font-weight: 500; }
+.mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { font-family: inherit; cursor: pointer; }
+
+.act { opacity: 1; transition: opacity 200ms ease; }
+.act.hidden { display: none !important; }
+.act.fading { opacity: 0; }
+
+#act0 { max-width: 420px; margin: 0 auto; padding: 48px 24px; min-height: 100vh; display: flex; flex-direction: column; }
+#act0 .gate { margin-top: 80px; }
+.gate-title { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 28px; letter-spacing: -0.01em; margin-top: 60px; }
+.gate-sub { color: var(--text-secondary); font-size: 14px; line-height: 1.65; margin-top: 12px; }
+.gate-form { display: flex; gap: 8px; margin-top: 28px; }
+.gate-form input {
+  flex: 1; padding: 12px 14px; font-size: 14px; border: 1px solid var(--border);
+  border-radius: 4px; background: var(--bg-card); color: var(--text-primary);
+  font-family: inherit;
+}
+.gate-form input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+.gate-form button { padding: 12px 20px; font-size: 14px; }
+.gate-error { color: var(--text-primary); font-size: 13px; margin-top: 14px; min-height: 18px; }
+
+#act1 { max-width: 640px; margin: 0 auto; padding: 48px 24px; min-height: 100vh; display: flex; flex-direction: column; }
+#act1 .logo { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 18px; color: var(--text-primary); }
+#act1 h1 { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 48px; line-height: 1.15; letter-spacing: -0.01em; margin-top: 80px; }
+#act1 .lede { color: var(--text-secondary); font-size: 16px; line-height: 1.7; margin-top: 24px; }
+#act1 .cta { margin-top: 40px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+.btn-primary {
+  background: var(--accent); color: #fff; border: 0; padding: 16px 32px;
+  border-radius: 4px; font-size: 15px; font-weight: 500;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-link {
+  background: transparent; color: var(--text-secondary); border: 0; padding: 0;
+  font-size: 14px; text-decoration: underline; text-underline-offset: 3px;
+}
+.btn-link:hover { color: var(--accent); }
+#archi-block { margin-top: 24px; padding: 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; display: none; }
+#archi-block.open { display: block; }
+#archi-block pre { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-secondary); white-space: pre; overflow-x: auto; }
+#act1 .footer { margin-top: auto; padding-top: 60px; color: var(--text-tertiary); font-size: 12px; }
+
+#act2 { background: var(--bg-primary); max-width: 720px; margin: 0 auto; padding: 48px 24px; min-height: 100vh; }
+#act2 h2 { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 24px; margin-bottom: 32px; color: var(--text-primary); }
+.conn-line { font-family: "JetBrains Mono", monospace; font-size: 14px; color: var(--text-secondary); padding: 8px 0; opacity: 0; transition: opacity 300ms ease; display: flex; align-items: center; gap: 8px; }
+.conn-line.show { opacity: 1; }
+.conn-line .dots { color: var(--text-tertiary); flex: 1; overflow: hidden; white-space: nowrap; text-overflow: clip; }
+.conn-line .label { color: var(--text-primary); }
+.conn-line .status { min-width: 140px; text-align: right; }
+.conn-line .ok { color: var(--text-primary); }
+#act2 .ready { margin-top: 32px; opacity: 0; transition: opacity 400ms ease; }
+#act2 .ready.show { opacity: 1; }
+#act2 .ready-text { color: var(--text-primary); font-size: 16px; margin-bottom: 16px; }
+
+#act3 { background: var(--bg-primary); min-height: 100vh; padding-bottom: 40px; }
+#act4 { display: none; }
+#act4.show { display: block; }
+
+/* Act 3 — selection screen */
+#act3 .topbar { border-bottom: 1px solid var(--border); background: var(--bg-card); }
+.sel-wrap { max-width: 960px; margin: 0 auto; padding: 48px 32px; }
+.sel-title { font-family: "Source Serif 4", Georgia, serif; font-weight: 500; font-size: 32px; letter-spacing: -0.01em; text-align: center; }
+.sel-sub { color: var(--text-secondary); font-size: 15px; line-height: 1.65; text-align: center; margin: 14px auto 36px; max-width: 600px; }
+.sel-grid { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 24px; align-items: start; }
+.sel-col { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 20px 22px; }
+.sel-col-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); font-weight: 600; }
+.sel-col-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; margin-bottom: 16px; }
+.sel-andor { font-size: 12px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; text-align: center; padding-top: 70px; }
+.sel-list { display: flex; flex-direction: column; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; }
+.sel-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 4px; cursor: pointer; transition: all 120ms; background: var(--bg-card);
+}
+.sel-item:hover { border-color: var(--accent); }
+.sel-item.checked { background: var(--accent-light); border-color: var(--accent); }
+.sel-check {
+  width: 16px; height: 16px; border: 1.5px solid var(--text-tertiary); border-radius: 3px;
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  font-size: 11px; color: transparent; background: var(--bg-card);
+}
+.sel-item.checked .sel-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sel-name { flex: 1; min-width: 0; }
+.sel-name .sel-primary { font-weight: 500; font-size: 13px; color: var(--text-primary); line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sel-name .sel-secondary { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.sel-kpi { font-size: 11px; color: var(--text-secondary); font-variant-numeric: tabular-nums; text-align: right; flex-shrink: 0; padding-left: 8px; }
+.sel-toggle-row { display: flex; gap: 14px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12px; }
+.sel-toggle-row button { background: transparent; border: 0; color: var(--accent); padding: 0; font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
+.sel-toggle-row button:hover { color: var(--accent-hover); }
+
+.rmn-group-head {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; margin: 14px 0 8px;
+}
+.rmn-group-head.amazon { background: var(--accent-light); color: var(--chart-amazon); }
+.rmn-group-head.criteo { background: var(--bg-tertiary); color: var(--chart-criteo); }
+.rmn-group-head.unlimitail { background: var(--accent-light); color: var(--chart-unlimitail); }
+.rmn-group-head:first-child { margin-top: 0; }
+
+.sel-summary { text-align: center; color: var(--text-secondary); font-size: 13px; margin: 32px auto 18px; min-height: 22px; }
+.sel-actions { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.sel-actions .btn-primary { padding: 14px 40px; font-size: 15px; }
+.sel-actions .btn-primary:disabled { background: var(--text-tertiary); cursor: not-allowed; }
+.sel-actions .btn-link { font-size: 13px; }
+
+/* Act 4 filter context bar */
+.filter-bar {
+  background: var(--bg-sidebar); border-bottom: 1px solid var(--border);
+  padding: 10px 32px; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; font-size: 13px; color: var(--text-secondary);
+}
+.filter-bar-inner { max-width: 1400px; margin: 0 auto; width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.filter-bar .filter-text { color: var(--text-primary); }
+.filter-bar .filter-text strong { font-weight: 600; }
+.filter-bar button {
+  background: transparent; border: 1px solid var(--border); color: var(--text-secondary);
+  padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 500;
+}
+.filter-bar button:hover { color: var(--accent); border-color: var(--accent); }
+.topbar .logo { cursor: pointer; }
+.topbar { border-bottom: 1px solid var(--border); background: var(--bg-card); }
+.topbar-inner { max-width: 1400px; margin: 0 auto; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.topbar .logo { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 18px; }
+.topbar-tools { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.pill {
+  display: inline-flex; border: 1px solid var(--border); border-radius: 999px;
+  overflow: hidden; background: var(--bg-card);
+}
+.pill button {
+  background: transparent; border: 0; padding: 6px 16px; font-size: 13px;
+  color: var(--text-secondary); font-weight: 500;
+}
+.pill button.active { background: var(--accent); color: #fff; }
+.conn-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+  font-size: 12px; background: var(--bg-card); color: var(--text-secondary);
+}
+.conn-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+.conn-badge.connected { color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
+.conn-badge.connected .dot { background: var(--accent); }
+.conn-badge a { margin-left: 6px; }
+
+.layout { max-width: 1400px; margin: 0 auto; padding: 32px; display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: start; }
+.main { min-width: 0; }
+.sidebar { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 4px; padding: 24px; position: sticky; top: 32px; }
+
+.section { padding: 48px 0; border-bottom: 1px solid var(--border); }
+.section:first-child { padding-top: 0; }
+.section:last-child { border-bottom: 0; }
+.section-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-tertiary); font-weight: 600; margin-bottom: 20px; }
+
+.hero-roas { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 56px; line-height: 1.1; letter-spacing: -0.02em; }
+.hero-sub { color: var(--text-secondary); font-size: 16px; margin-top: 12px; line-height: 1.6; }
+
+.signals-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.signal-card {
+  background: var(--bg-secondary); border: 1px solid var(--border); border-left-width: 3px;
+  border-radius: 4px; padding: 18px 20px;
+}
+.signal-card.high { border-left-color: var(--text-primary); }
+.signal-card.medium { border-left-color: var(--text-tertiary); }
+.signal-card .severity-tag { display: inline-block; font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+.signal-card.high .severity-tag { color: var(--text-primary); }
+.signal-card.medium .severity-tag { color: var(--text-secondary); }
+.signal-card .title { font-weight: 600; font-size: 14px; margin-bottom: 8px; line-height: 1.4; }
+.signal-card .desc { color: var(--text-secondary); font-size: 13px; line-height: 1.55; margin-bottom: 14px; }
+.signal-card .deeper { background: transparent; border: 0; color: var(--accent); font-size: 13px; padding: 0; font-weight: 500; }
+.signal-card .deeper:hover { text-decoration: underline; }
+.signals-empty { color: var(--text-tertiary); font-size: 14px; font-style: italic; }
+
+.rmn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.rmn-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 20px; }
+.rmn-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+.rmn-card .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; margin-bottom: 16px; }
+.rmn-card .m-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); }
+.rmn-card .m-value { font-size: 16px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.rmn-card .spark-wrap { height: 60px; }
+
+.audit-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.audit-table th, .audit-table td { padding: 12px 16px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border); }
+.audit-table th { font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; background: var(--bg-primary); }
+.audit-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.audit-table tr:last-child td { border-bottom: 0; }
+.share-bar { position: relative; width: 100px; height: 8px; background: var(--bg-tertiary); border-radius: 999px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 8px; }
+.share-bar > span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 999px; }
+.audit-note { color: var(--text-tertiary); font-size: 12px; font-style: italic; margin-top: 12px; line-height: 1.5; }
+
+.sidebar h3 { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.online-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
+.sidebar .sub { color: var(--text-tertiary); font-size: 12px; margin-bottom: 16px; }
+.scenario-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.scenario-btn {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;
+  padding: 12px 14px; text-align: left; font-size: 13px; color: var(--text-primary);
+  font-weight: 500; transition: all 150ms;
+}
+.scenario-btn:hover { border-color: var(--accent); color: var(--accent); }
+.sep { height: 1px; background: var(--border); margin: 0 0 16px; }
+.ask-form { display: flex; gap: 6px; margin-bottom: 12px; }
+.ask-form input {
+  flex: 1; padding: 10px 12px; font-size: 13px; border: 1px solid var(--border);
+  border-radius: 4px; background: var(--bg-card); color: var(--text-primary);
+  font-family: inherit;
+}
+.ask-form input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+.ask-form button {
+  background: var(--accent); color: #fff; border: 0; padding: 0 14px; border-radius: 4px;
+  font-size: 13px; font-weight: 500;
+}
+.ask-form button:hover { background: var(--accent-hover); }
+.ask-form button:disabled { background: var(--text-tertiary); }
+.suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+.suggestions button {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 999px;
+  padding: 5px 12px; font-size: 11px; color: var(--text-secondary);
+}
+.suggestions button:hover { border-color: var(--accent); color: var(--accent); }
+
+.ai-output {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;
+  padding: 20px; min-height: 80px; max-height: 600px; overflow-y: auto;
+  font-size: 13px; line-height: 1.65; color: var(--text-primary);
+}
+.ai-output:empty::before { content: "No analysis yet. Pick a scenario or ask a question."; color: var(--text-tertiary); font-style: italic; font-size: 12px; }
+.ai-output h2 { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 18px; margin: 16px 0 8px; }
+.ai-output h2:first-child { margin-top: 0; }
+.ai-output h3 { font-size: 14px; font-weight: 600; margin: 14px 0 6px; }
+.ai-output p { margin-bottom: 10px; }
+.ai-output ul, .ai-output ol { margin: 8px 0 10px 22px; }
+.ai-output li { margin-bottom: 4px; }
+.ai-output strong { font-weight: 600; color: var(--text-primary); }
+.ai-output code { background: var(--bg-sidebar); padding: 1px 5px; border-radius: 3px; font-family: "JetBrains Mono", monospace; font-size: 12px; }
+.thinking { display: inline-flex; gap: 3px; padding: 4px 0; }
+.thinking span { width: 5px; height: 5px; border-radius: 50%; background: var(--text-tertiary); animation: blink 1.2s infinite; }
+.thinking span:nth-child(2) { animation-delay: 0.2s; }
+.thinking span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+.thinking-text { font-size: 12px; color: var(--text-tertiary); margin-left: 8px; }
+
+.ai-error { color: var(--text-primary); background: var(--bg-secondary); border-left: 3px solid var(--text-primary); padding: 12px; border-radius: 4px; font-size: 13px; }
+
+/* Pedagogical intro banner */
+.intro-banner {
+  background: var(--bg-sidebar); border-left: 3px solid var(--accent);
+  padding: 16px 20px; margin-bottom: 28px; border-radius: 4px; position: relative;
+}
+.intro-banner.hidden { display: none; }
+.intro-banner .intro-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; color: var(--text-primary); }
+.intro-banner .intro-body { color: var(--text-secondary); font-size: 13px; line-height: 1.65; padding-right: 80px; }
+.intro-close {
+  position: absolute; top: 12px; right: 12px; background: transparent; border: 0;
+  color: var(--text-tertiary); font-size: 12px; padding: 4px 8px; text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.intro-close:hover { color: var(--text-primary); }
+
+/* Info tooltips */
+.info-q {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; border-radius: 50%; background: var(--bg-sidebar);
+  color: var(--text-secondary); font-size: 10px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--border); margin-left: 6px; user-select: none; vertical-align: middle;
+  line-height: 1; padding: 0; font-family: inherit;
+}
+.info-q:hover, .info-q.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+.info-tooltip {
+  position: fixed; z-index: 9999; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 4px; padding: 12px 14px; max-width: 320px; font-size: 13px;
+  line-height: 1.55; color: var(--text-primary);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.10); pointer-events: auto;
+}
+.info-tooltip::before {
+  content: ""; position: absolute; width: 8px; height: 8px; background: var(--bg-card);
+  border-left: 1px solid var(--border); border-top: 1px solid var(--border);
+  transform: rotate(45deg); top: -5px; left: 14px;
+}
+
+/* Product drill-down */
+.product-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.product-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px;
+  padding: 14px 16px; cursor: pointer; transition: border-color 150ms, background 150ms;
+}
+.product-card:hover { border-color: var(--accent); }
+.product-card.active { border-color: var(--accent); background: var(--accent-light); }
+.product-card .p-name { font-weight: 500; font-size: 13px; margin-bottom: 6px; line-height: 1.4; color: var(--text-primary); }
+.product-card .p-meta { color: var(--text-tertiary); font-size: 12px; }
+.product-detail {
+  margin-top: 22px; background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 4px; padding: 24px;
+}
+.product-detail-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; gap: 12px; }
+.product-detail-head h3 { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 20px; }
+.product-detail-close {
+  background: transparent; border: 0; color: var(--text-secondary); font-size: 13px;
+  padding: 4px 8px;
+}
+.product-detail-close:hover { color: var(--text-primary); }
+.product-mini-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 22px; }
+.product-mini-card {
+  border: 1px solid var(--border); border-left-width: 3px; border-radius: 4px;
+  padding: 14px 16px; background: var(--bg-primary);
+}
+.product-mini-card h4 { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.product-mini-card.absent { opacity: 0.55; }
+.mm-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+.mm-label { color: var(--text-tertiary); }
+.mm-value { font-variant-numeric: tabular-nums; font-weight: 500; color: var(--text-primary); }
+.product-chart-wrap { height: 220px; margin-bottom: 18px; position: relative; }
+.over-attr-alert {
+  background: var(--bg-secondary); border-left: 3px solid var(--text-tertiary);
+  padding: 14px 18px; border-radius: 4px; font-size: 13px; line-height: 1.55;
+  margin-bottom: 18px; color: var(--text-primary);
+}
+.over-attr-alert strong { display: block; margin-bottom: 4px; color: var(--text-secondary); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.product-ai-btn {
+  background: var(--accent); color: #fff; border: 0; padding: 10px 18px; border-radius: 4px;
+  font-size: 13px; font-weight: 500;
+}
+.product-ai-btn:hover { background: var(--accent-hover); }
+
+@media (max-width: 1024px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  .signals-grid, .rmn-grid { grid-template-columns: 1fr 1fr; }
+  .product-cards { grid-template-columns: 1fr 1fr; }
+  .product-mini-cards { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  #act1 h1 { font-size: 32px; margin-top: 40px; }
+  .layout { padding: 20px; }
+  .hero-roas { font-size: 36px; }
+  .signals-grid, .rmn-grid { grid-template-columns: 1fr; }
+  .topbar-inner { padding: 12px 16px; }
+  .sel-wrap { padding: 28px 16px; }
+  .sel-grid { grid-template-columns: 1fr; gap: 12px; }
+  .sel-andor { padding: 4px 0; }
+  .sel-title { font-size: 24px; }
+  .filter-bar { padding: 10px 16px; flex-direction: column; align-items: flex-start; gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<div id="act0" class="act">
+  <div class="gate">
+    <div class="logo">openRMN</div>
+    <h2 class="gate-title">Restricted access</h2>
+    <p class="gate-sub">This lab is reserved for invited reviewers. Please enter the access password to continue.</p>
+    <form id="gate-form" class="gate-form" autocomplete="off">
+      <input type="password" id="gate-input" placeholder="Access password" autofocus>
+      <button class="btn-primary" type="submit">Enter →</button>
+    </form>
+    <div id="gate-error" class="gate-error"></div>
+  </div>
+  <div class="footer">v0.2 — open source · MIT</div>
+</div>
+
+<div id="act1" class="act hidden">
+  <div class="logo">openRMN</div>
+  <h1>The independent retail media analytics layer</h1>
+  <p class="lede">Your retail media campaigns are scattered across Amazon, Criteo, Unlimitail and 5 other networks. Each walled garden has its own schema, its own metrics, its own truth. openRMN unifies, normalizes and reveals what each one hides.</p>
+  <div class="cta">
+    <button class="btn-primary" id="btn-start">Launch the lab →</button>
+    <button class="btn-link" id="btn-archi">See technical architecture</button>
+    <div id="archi-block">
+      <pre>Amazon Ads API ─┐
+Criteo RM API ──┼─→ Connectors ─→ UnifiedRow schema ─→ Deterministic layer ─→ AI agent (Claude)
+Unlimitail API ─┘    (mock+real)    (pandas DF)        KPI · Anomalies · Audit    SSE-streamed brief</pre>
+    </div>
+  </div>
+  <div class="footer">v0.2 — open source · MIT</div>
+</div>
+
+<div id="act2" class="act hidden">
+  <h2>Connecting to retail media networks…</h2>
+  <div id="conn-lines"></div>
+  <div class="ready" id="conn-ready">
+    <div class="ready-text">Analysis ready.</div>
+    <button class="btn-primary" id="btn-results">See results →</button>
+  </div>
+</div>
+
+<div id="act3" class="act hidden">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="logo" data-home="1">openRMN</div>
+      <div class="topbar-tools">
+        <span class="pill" id="mode-toggle-sel">
+          <button data-mode="mock" class="active">Mock</button>
+          <button data-mode="real">Real</button>
+        </span>
+        <span class="conn-badge" id="amz-badge-sel"><span class="dot"></span><span id="amz-badge-sel-text">Amazon …</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="sel-wrap">
+    <h2 class="sel-title">What do you want to analyze?</h2>
+    <p class="sel-sub">Select the products and/or campaigns to include in the analysis. openRMN will cross-reference data from the 3 networks on your selection.</p>
+    <div class="sel-grid">
+      <div class="sel-col">
+        <div class="sel-col-title">Products</div>
+        <div class="sel-col-sub" id="sel-prod-sub">Loading…</div>
+        <div class="sel-list" id="sel-prod-list"></div>
+        <div class="sel-toggle-row">
+          <button type="button" data-target="products" data-action="all">Select all</button>
+          <button type="button" data-target="products" data-action="none">Clear</button>
+        </div>
+      </div>
+      <div class="sel-andor">and / or</div>
+      <div class="sel-col">
+        <div class="sel-col-title">Campaigns</div>
+        <div class="sel-col-sub" id="sel-camp-sub">Loading…</div>
+        <div class="sel-list" id="sel-camp-list"></div>
+        <div class="sel-toggle-row">
+          <button type="button" data-target="campaigns" data-action="all">Select all</button>
+          <button type="button" data-target="campaigns" data-action="none">Clear</button>
+        </div>
+      </div>
+    </div>
+    <div class="sel-summary" id="sel-summary">—</div>
+    <div class="sel-actions">
+      <button class="btn-primary" id="sel-go" type="button">Analyze selection →</button>
+      <button class="btn-link" id="sel-go-all" type="button">Or analyze the entire portfolio →</button>
+    </div>
+  </div>
+</div>
+
+<div id="act4">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="logo" data-home="1">openRMN</div>
+      <div class="topbar-tools">
+        <span class="pill" id="mode-toggle">
+          <button data-mode="mock" class="active">Mock</button>
+          <button data-mode="real">Real</button>
+        </span>
+        <span class="conn-badge" id="amz-badge"><span class="dot"></span><span id="amz-badge-text">Amazon …</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="filter-bar" id="filter-bar">
+    <div class="filter-bar-inner">
+      <div class="filter-text" id="filter-text">—</div>
+      <button type="button" id="btn-edit-selection">← Edit selection</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="main">
+      <div id="intro-banner" class="intro-banner">
+        <button class="intro-close" id="intro-close" type="button">Hide</button>
+        <div class="intro-title">How this demo works</div>
+        <div class="intro-body">openRMN aggregates data from 3 retail media networks (Amazon Ads, Criteo, Unlimitail) through their APIs. The data shown here is simulated but faithfully reproduces the format and structure of the real APIs. Each network attributes sales using ITS OWN methodology — that's exactly the problem openRMN exposes.</div>
+      </div>
+      <div class="section">
+        <div class="hero-roas" id="hero-roas">—</div>
+        <div class="hero-sub" id="hero-sub">Loading consolidated data…</div>
+      </div>
+      <div class="section">
+        <div class="section-label">Weak signals detected <button class="info-q" type="button" data-tip="anomalies" aria-label="Explication">?</button></div>
+        <div class="signals-grid" id="signals"></div>
+      </div>
+      <div class="section">
+        <div class="section-label">Performance by network</div>
+        <div class="rmn-grid" id="rmn-grid"></div>
+      </div>
+      <div class="section">
+        <div class="section-label">Explore by product</div>
+        <div class="product-cards" id="product-cards"></div>
+        <div class="product-detail" id="product-detail" style="display:none;"></div>
+      </div>
+      <div class="section">
+        <div class="section-label">Neutrality audit — common SKUs</div>
+        <div id="audit-wrap"></div>
+      </div>
+    </div>
+
+    <aside class="sidebar">
+      <h3><span class="online-dot"></span>AI Analyst</h3>
+      <div class="sub">online · Claude Sonnet 4.5</div>
+      <div class="scenario-list">
+        <button class="scenario-btn" data-persona="executive">Executive brief (CMO)</button>
+        <button class="scenario-btn" data-persona="operational">Operational brief (Trader)</button>
+        <button class="scenario-btn" data-persona="neutrality">Neutrality audit</button>
+      </div>
+      <div class="sep"></div>
+      <form class="ask-form" id="ask-form">
+        <input type="text" id="ask-input" placeholder="Ask a question about your campaigns…" autocomplete="off">
+        <button type="submit" id="ask-send">→</button>
+      </form>
+      <div class="suggestions" id="ask-suggestions">
+        <button data-q="Why does Criteo ROAS diverge?">Why does Criteo ROAS diverge?</button>
+        <button data-q="Reallocate my cross-network budget.">Reallocate my cross-network budget</button>
+        <button data-q="Which incrementality tests should I run?">Which incrementality tests should I run?</button>
+      </div>
+      <div class="ai-output" id="ai-output"></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const ACCESS_PASSWORD = "holco3096";
+
+const State = {
+  act: 0,
+  mode: "mock",
+  data: { kpis: null, anomalies: null, audit: null, raw: null, daily: null, sources: null, catalog: null },
+  charts: {},
+  streaming: false,
+  selectedProducts: [],   // names
+  selectedCampaigns: [],  // ids
+  selectedProduct: null,
+};
+
+const RMN_PALETTE = {
+  "Amazon Ads":          { color: "#2752E7", dash: [],    css: "var(--chart-amazon)" },
+  "Criteo Retail Media": { color: "#6B6B6B", dash: [],    css: "var(--chart-criteo)" },
+  "Unlimitail":          { color: "#6B82EE", dash: [5,5], css: "var(--chart-unlimitail)" },
+};
+
+const fmtEur = n => new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n || 0);
+const fmtEurC = n => new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n || 0);
+const fmtNum = n => new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(n || 0);
+const fmtPct = n => new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(n || 0) + "%";
+function filterParams() {
+  const parts = [];
+  if (State.selectedProducts && State.selectedProducts.length) {
+    parts.push("products=" + State.selectedProducts.map(encodeURIComponent).join(","));
+  }
+  if (State.selectedCampaigns && State.selectedCampaigns.length) {
+    parts.push("campaigns=" + State.selectedCampaigns.map(encodeURIComponent).join(","));
+  }
+  return parts.join("&");
+}
+const q = (extra = "") => {
+  const f = filterParams();
+  const tail = [extra, f].filter(Boolean).join("&");
+  return `?mode=${encodeURIComponent(State.mode)}${tail ? "&" + tail : ""}`;
+};
+
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) {
+    let m = `HTTP ${r.status}`;
+    try { const j = await r.json(); if (j.detail) m += ` — ${j.detail}`; } catch {}
+    throw new Error(m);
+  }
+  return r.json();
+}
+
+async function loadAllData() {
+  const [kpis, anomalies, audit, raw, sources] = await Promise.all([
+    fetchJSON("./api/kpis" + q()),
+    fetchJSON("./api/anomalies" + q()),
+    fetchJSON("./api/audit" + q()),
+    fetchJSON("./api/raw" + q()),
+    fetchJSON("./api/sources/status").catch(() => null),
+  ]);
+  State.data = { kpis, anomalies, audit, raw, sources };
+  return State.data;
+}
+
+function startAct0() {
+  const form = document.getElementById("gate-form");
+  const input = document.getElementById("gate-input");
+  const err = document.getElementById("gate-error");
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    err.textContent = "";
+    if (input.value.trim().toLowerCase() === ACCESS_PASSWORD) {
+      const a0 = document.getElementById("act0");
+      a0.classList.add("fading");
+      await sleep(220);
+      a0.classList.add("hidden");
+      document.getElementById("act1").classList.remove("hidden");
+    } else {
+      err.textContent = "Incorrect password.";
+      input.select();
+    }
+  });
+  document.getElementById("btn-start").addEventListener("click", goAct2);
+  document.getElementById("btn-archi").addEventListener("click", () => {
+    document.getElementById("archi-block").classList.toggle("open");
+  });
+}
+
+async function goAct2() {
+  const a1 = document.getElementById("act1");
+  a1.classList.add("fading");
+  await sleep(220);
+  a1.classList.add("hidden");
+  document.getElementById("act2").classList.remove("hidden");
+  await runConnectionAnimation();
+}
+
+const SPINNER_FRAMES = ["◐", "◓", "◑", "◒"];
+
+function makeLine(label) {
+  const el = document.createElement("div");
+  el.className = "conn-line";
+  el.innerHTML = `<span class="label">${label}</span><span class="dots">............................................................</span><span class="status">◐</span>`;
+  return el;
+}
+
+async function runConnectionAnimation() {
+  const dataPromise = loadAllData();
+  const lines = [
+    { label: "[1/4] Amazon Ads API EU", count: () => countByRmn("Amazon Ads") },
+    { label: "[2/4] Criteo Retail Media API", count: () => countByRmn("Criteo Retail Media") },
+    { label: "[3/4] Unlimitail (Carrefour Links)", count: () => countByRmn("Unlimitail") },
+    { label: "[4/4] Cross-network normalization", count: () => (State.data.raw || []).length, suffix: " UnifiedRow" },
+  ];
+  const container = document.getElementById("conn-lines");
+  container.innerHTML = "";
+  const els = lines.map(l => { const e = makeLine(l.label); container.appendChild(e); return e; });
+
+  for (let i = 0; i < lines.length; i++) {
+    els[i].classList.add("show");
+    const status = els[i].querySelector(".status");
+    const spin = setInterval(() => {
+      status.textContent = SPINNER_FRAMES[(SPINNER_FRAMES.indexOf(status.textContent) + 1) % SPINNER_FRAMES.length];
+    }, 150);
+    if (i === 0) await dataPromise;
+    await sleep(700);
+    clearInterval(spin);
+    const n = lines[i].count();
+    status.innerHTML = `<span class="ok">✓ ${fmtNum(n)} rows${lines[i].suffix || ""}</span>`;
+    if (i < lines.length - 1) await sleep(150);
+  }
+
+  await sleep(600);
+  document.getElementById("conn-ready").classList.add("show");
+  document.getElementById("btn-results").addEventListener("click", goAct3);
+  setTimeout(() => { if (State.act < 3) goAct3(); }, 2400);
+}
+
+function countByRmn(rmn) {
+  const raw = State.data.raw || [];
+  return raw.filter(r => r.rmn === rmn).length;
+}
+
+async function goAct3() {
+  if (State.act === 3) return;
+  // fade from current visible act
+  const current = document.querySelector(".act:not(.hidden)");
+  if (current) {
+    current.classList.add("fading");
+    await sleep(220);
+    current.classList.add("hidden");
+  }
+  // hide act4 if shown
+  document.getElementById("act4").classList.remove("show");
+  const act3 = document.getElementById("act3");
+  act3.classList.remove("hidden", "fading");
+  State.act = 3;
+  renderAmzBadgeIn("amz-badge-sel", "amz-badge-sel-text");
+  await ensureCatalog();
+  renderSelection();
+}
+
+async function goAct4() {
+  if (State.act === 4) return;
+  // fade out act3
+  const a3 = document.getElementById("act3");
+  if (!a3.classList.contains("hidden")) {
+    a3.classList.add("fading");
+    await sleep(220);
+    a3.classList.add("hidden");
+  }
+  document.getElementById("act4").classList.add("show");
+  State.act = 4;
+  // refetch filtered data, not raw counts
+  try {
+    await loadAllData();
+  } catch (e) { /* fall through to render */ }
+  renderDashboard();
+  renderAmzBadge();
+  renderFilterBar();
+}
+
+async function goAct1() {
+  document.querySelectorAll(".act").forEach(a => { a.classList.add("hidden"); a.classList.remove("fading"); });
+  document.getElementById("act4").classList.remove("show");
+  document.getElementById("act1").classList.remove("hidden");
+  State.act = 1;
+}
+
+async function ensureCatalog() {
+  if (State.data.catalog) return;
+  try {
+    const cat = await fetchJSON(`./api/catalog?mode=${encodeURIComponent(State.mode)}`);
+    State.data.catalog = cat;
+    // default: select all
+    State.selectedProducts = (cat.products || []).map(p => p.name);
+    State.selectedCampaigns = (cat.campaigns || []).map(c => c.id);
+  } catch (e) {
+    State.data.catalog = { products: [], campaigns: [], summary: {} };
+  }
+}
+
+function renderDashboard() {
+  const k = State.data.kpis;
+  const anomalies = State.data.anomalies || [];
+  const audit = State.data.audit || { per_product: [], rmns: [] };
+
+  const heroRoas = k && k.roas_unified != null ? `${fmtNum(k.roas_unified)}x` : "—";
+  document.getElementById("hero-roas").innerHTML = `<span style="color:var(--text-tertiary);font-size:0.6em;letter-spacing:1px;text-transform:uppercase;">Unified ROAS <button class="info-q" type="button" data-tip="roas" aria-label="Explication">?</button></span> ${heroRoas}`;
+  const issue = anomalies.length === 0 ? "no anomalies detected" : `${anomalies.length} ${anomalies.length === 1 ? "issue" : "issues"}`;
+  document.getElementById("hero-sub").textContent = `on ${fmtEur(k && k.spend_total_eur)} invested — but this average hides ${issue}.`;
+
+  const sig = document.getElementById("signals");
+  if (anomalies.length === 0) {
+    sig.innerHTML = '<div class="signals-empty">No anomalies detected for this period. All clear.</div>';
+  } else {
+    sig.innerHTML = anomalies.slice(0, 6).map((a, idx) => {
+      const title = a.type === "potential_cannibalization"
+        ? `Cannibalization — ${a.product}`
+        : `Underperformance — ${a.campaign}`;
+      const desc = a.message;
+      const tag = a.severity === "high" ? "Critical" : "Warning";
+      return `<div class="signal-card ${a.severity}">
+        <div class="severity-tag">${tag}</div>
+        <div class="title">${title}</div>
+        <div class="desc">${desc}</div>
+        <button class="deeper" data-q="${escapeAttr('Dive deeper into this anomaly: ' + desc)}">Deep dive →</button>
+      </div>`;
+    }).join("");
+    sig.querySelectorAll(".deeper").forEach(b => {
+      b.addEventListener("click", () => {
+        document.getElementById("ask-input").value = b.dataset.q;
+        submitQuestion(b.dataset.q);
+      });
+    });
+  }
+
+  const rmnGrid = document.getElementById("rmn-grid");
+  const breakdown = (k && k.breakdown_by_rmn) || {};
+  const order = ["Amazon Ads", "Criteo Retail Media", "Unlimitail"];
+  rmnGrid.innerHTML = "";
+  for (const rmn of order) {
+    const b = breakdown[rmn];
+    if (!b) continue;
+    const p = RMN_PALETTE[rmn] || { color: "#1C1C1C", dash: [], css: "var(--text-primary)" };
+    const id = "spark-" + rmn.replace(/[^a-z]/gi, "");
+    const card = document.createElement("div");
+    card.className = "rmn-card";
+    card.innerHTML = `
+      <h3 style="color:${p.css}">${rmn}</h3>
+      <div class="metrics">
+        <div><div class="m-label">Spend <button class="info-q" type="button" data-tip="spend" aria-label="Explication">?</button></div><div class="m-value">${fmtEur(b.spend_eur)}</div></div>
+        <div><div class="m-label">ROAS <button class="info-q" type="button" data-tip="roas" aria-label="Explication">?</button></div><div class="m-value">${fmtNum(b.roas)}x</div></div>
+        <div><div class="m-label">CTR <button class="info-q" type="button" data-tip="ctr" aria-label="Explication">?</button></div><div class="m-value">${fmtPct(b.ctr_pct)}</div></div>
+        <div><div class="m-label">CPC <button class="info-q" type="button" data-tip="cpc" aria-label="Explication">?</button></div><div class="m-value">${fmtEurC(b.cpc_eur)}</div></div>
+      </div>
+      <div class="spark-wrap"><canvas id="${id}"></canvas></div>
+    `;
+    rmnGrid.appendChild(card);
+    drawSparkline(id, rmn, p.color, p.dash);
+  }
+
+  renderAudit(audit);
+  renderProductCards();
+  // re-render an open detail to refresh data after mode switch
+  if (State.selectedProduct) {
+    const card = document.querySelector(`.product-card[data-product="${escapeAttr(State.selectedProduct)}"]`);
+    if (card) loadProductDetail(State.selectedProduct, card);
+    else closeProductDetail();
+  }
+}
+
+function drawSparkline(canvasId, rmn, color, dash) {
+  const raw = State.data.raw || [];
+  const byDate = {};
+  raw.filter(r => r.rmn === rmn).forEach(r => {
+    if (!byDate[r.date]) byDate[r.date] = { spend: 0, sales: 0 };
+    byDate[r.date].spend += r.spend_eur;
+    byDate[r.date].sales += r.sales_eur;
+  });
+  const dates = Object.keys(byDate).sort();
+  const roasSeries = dates.map(d => byDate[d].spend ? byDate[d].sales / byDate[d].spend : 0);
+  if (State.charts[canvasId]) State.charts[canvasId].destroy();
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  State.charts[canvasId] = new Chart(ctx, {
+    type: "line",
+    data: { labels: dates, datasets: [{
+      data: roasSeries, borderColor: color, backgroundColor: "transparent",
+      borderDash: dash || [],
+      fill: false, tension: 0.35, pointRadius: 0, borderWidth: 2,
+    }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        callbacks: { label: ctx => `ROAS ${ctx.parsed.y.toFixed(2)}x`, title: items => items[0].label }
+      } },
+      scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
+      interaction: { intersect: false, mode: "index" },
+    },
+  });
+}
+
+function renderAudit(audit) {
+  const wrap = document.getElementById("audit-wrap");
+  const rows = audit.per_product || [];
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="signals-empty">No common SKUs identified for this period.</div>';
+    return;
+  }
+  const order = ["Amazon Ads", "Criteo Retail Media", "Unlimitail"];
+  const headerCols = order.map(r => `<th class="num">${r}<button class="info-q" type="button" data-tip="sales" aria-label="Explication">?</button></th>`).join("");
+  const body = rows.map(r => {
+    const cells = order.map(rmn => `<td class="num">${fmtEur(r.sales_by_rmn[rmn] || 0)}</td>`).join("");
+    const amzShare = r.amazon_share_pct || 0;
+    return `<tr>
+      <td>${r.product}</td>
+      ${cells}
+      <td class="num"><span class="share-bar"><span style="width:${Math.min(100, amzShare)}%"></span></span>${fmtPct(amzShare)}</td>
+    </tr>`;
+  }).join("");
+  wrap.innerHTML = `
+    <table class="audit-table">
+      <thead><tr><th>Product</th>${headerCols}<th class="num">Amazon share</th></tr></thead>
+      <tbody>${body}</tbody>
+    </table>
+    <div class="audit-note" style="font-style:normal;color:var(--text-secondary);font-size:12.5px;line-height:1.65;margin-top:14px;">
+      <strong style="color:var(--text-primary);font-weight:600;">Methodology:</strong> this audit compares the sales each network <strong>self-attributes</strong> on the same products. Amazon uses a <strong>7-day post-click</strong> attribution window. Criteo uses <strong>30 days post-click</strong>. Unlimitail uses <strong>14 days post-click + post-view</strong>. These methodological differences partly explain the observed gaps.<br>
+      → This is precisely the comparability problem openRMN solves, by normalizing and confronting the declarations of each network.
+    </div>
+  `;
+}
+
+function renderAmzBadgeIn(badgeId, txtId) {
+  const s = State.data.sources;
+  const badge = document.getElementById(badgeId);
+  const txt = document.getElementById(txtId);
+  if (!badge || !txt) return;
+  if (s && s.amazon && s.amazon.mode_available === "real") {
+    badge.classList.add("connected");
+    txt.innerHTML = `Amazon connected <span style="color:var(--text-tertiary);font-weight:400">(profile ${s.amazon.profile_id})</span>`;
+  } else {
+    badge.classList.remove("connected");
+    txt.innerHTML = `Amazon disconnected <a href="./api/amazon/oauth/start" target="_blank">Connect</a>`;
+  }
+}
+function renderAmzBadge() { renderAmzBadgeIn("amz-badge", "amz-badge-text"); }
+
+async function handleModeChange(newMode) {
+  State.mode = newMode;
+  document.querySelectorAll("#mode-toggle button, #mode-toggle-sel button").forEach(b => {
+    b.classList.toggle("active", b.dataset.mode === newMode);
+  });
+  // catalog depends on mode
+  State.data.catalog = null;
+  if (State.act === 3) {
+    await ensureCatalog();
+    renderSelection();
+    renderAmzBadgeIn("amz-badge-sel", "amz-badge-sel-text");
+  } else if (State.act === 4) {
+    document.getElementById("hero-sub").textContent = "Reloading…";
+    try {
+      await loadAllData();
+      renderDashboard();
+      renderAmzBadge();
+      renderFilterBar();
+    } catch (e) {
+      document.getElementById("hero-sub").innerHTML = `<span style="color:var(--text-primary)">Error in ${State.mode} mode: ${e.message}</span>`;
+    }
+  }
+}
+document.querySelectorAll("#mode-toggle button, #mode-toggle-sel button").forEach(btn => {
+  btn.addEventListener("click", () => handleModeChange(btn.dataset.mode));
+});
+
+/* Logo "home" + edit selection */
+document.querySelectorAll('[data-home="1"]').forEach(el => {
+  el.addEventListener("click", () => goAct1());
+});
+document.getElementById("btn-edit-selection").addEventListener("click", () => goAct3());
+
+/* Filter context bar */
+function renderFilterBar() {
+  const cat = State.data.catalog || { products: [], campaigns: [] };
+  const totalProd = cat.products.length;
+  const totalCamp = cat.campaigns.length;
+  const sp = State.selectedProducts.length;
+  const sc = State.selectedCampaigns.length;
+  const isFullProd = sp === totalProd;
+  const isFullCamp = sc === totalCamp;
+  let txt;
+  if (isFullProd && isFullCamp) {
+    txt = `<strong>Full analysis</strong> — ${totalProd} products · ${totalCamp} campaigns · 3 networks`;
+  } else {
+    const parts = [];
+    if (sp && !isFullProd) {
+      const names = State.selectedProducts.slice(0, 3).join(", ");
+      parts.push(`<strong>${sp}</strong> product${sp > 1 ? "s" : ""}${sp <= 3 ? ": " + names : ""}`);
+    } else if (isFullProd) {
+      parts.push(`all products`);
+    } else if (sp === 0) {
+      parts.push(`<strong>0 product</strong>`);
+    }
+    if (sc && !isFullCamp) parts.push(`<strong>${sc}</strong> campaign${sc > 1 ? "s" : ""}`);
+    else if (isFullCamp) parts.push(`all campaigns`);
+    else if (sc === 0) parts.push(`<strong>0 campaign</strong>`);
+    txt = `Filtered analysis — ${parts.join(" · ")}`;
+  }
+  document.getElementById("filter-text").innerHTML = txt;
+}
+
+/* Selection screen rendering */
+function renderSelection() {
+  const cat = State.data.catalog || { products: [], campaigns: [], summary: {} };
+  const products = cat.products || [];
+  const campaigns = cat.campaigns || [];
+  const rmnsCount = cat.summary?.total_rmns ?? 3;
+
+  document.getElementById("sel-prod-sub").textContent =
+    `${products.length} product${products.length > 1 ? "s" : ""} detected across ${rmnsCount} networks`;
+  document.getElementById("sel-camp-sub").textContent =
+    `${campaigns.length} campaign${campaigns.length > 1 ? "s" : ""} across ${rmnsCount} networks`;
+
+  const selProd = new Set(State.selectedProducts);
+  const prodHtml = products.map(p => {
+    const checked = selProd.has(p.name);
+    const rmnsLabel = (p.rmns || []).map(rmnShort).join(" · ");
+    return `<div class="sel-item ${checked ? "checked" : ""}" data-kind="product" data-id="${escapeAttr(p.name)}">
+      <span class="sel-check">✓</span>
+      <div class="sel-name">
+        <div class="sel-primary">${p.name}</div>
+        <div class="sel-secondary">${rmnsLabel}</div>
+      </div>
+      <div class="sel-kpi">ROAS ${fmtNum(p.roas)}x<br>${fmtEur(p.total_spend)}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("sel-prod-list").innerHTML = prodHtml || '<div style="color:var(--text-tertiary);font-size:13px">No product available.</div>';
+
+  const selCamp = new Set(State.selectedCampaigns);
+  const grouped = {};
+  for (const c of campaigns) { (grouped[c.rmn] ||= []).push(c); }
+  const order = ["Amazon Ads", "Criteo Retail Media", "Unlimitail"];
+  let campHtml = "";
+  for (const rmn of order) {
+    const list = grouped[rmn] || [];
+    if (!list.length) continue;
+    campHtml += `<div class="rmn-group-head ${rmnClass(rmn)}">${rmn}</div>`;
+    campHtml += list.map(c => {
+      const checked = selCamp.has(c.id);
+      return `<div class="sel-item ${checked ? "checked" : ""}" data-kind="campaign" data-id="${escapeAttr(c.id)}">
+        <span class="sel-check">✓</span>
+        <div class="sel-name">
+          <div class="sel-primary">${c.name}</div>
+          <div class="sel-secondary mono" style="font-family:'JetBrains Mono',monospace;font-size:10.5px;">${c.id}</div>
+        </div>
+        <div class="sel-kpi">ROAS ${fmtNum(c.roas)}x<br>${fmtEur(c.total_spend)}</div>
+      </div>`;
+    }).join("");
+  }
+  document.getElementById("sel-camp-list").innerHTML = campHtml || '<div style="color:var(--text-tertiary);font-size:13px">No campaign available.</div>';
+
+  // wire item clicks
+  document.querySelectorAll("#act3 .sel-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const kind = item.dataset.kind;
+      const id = item.dataset.id;
+      const arr = kind === "product" ? State.selectedProducts : State.selectedCampaigns;
+      const idx = arr.indexOf(id);
+      if (idx >= 0) arr.splice(idx, 1); else arr.push(id);
+      item.classList.toggle("checked");
+      updateSelectionSummary();
+    });
+  });
+  // toggles
+  document.querySelectorAll("#act3 .sel-toggle-row button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.target;
+      const action = btn.dataset.action;
+      if (target === "products") {
+        State.selectedProducts = action === "all" ? products.map(p => p.name) : [];
+      } else {
+        State.selectedCampaigns = action === "all" ? campaigns.map(c => c.id) : [];
+      }
+      renderSelection();
+    });
+  });
+  updateSelectionSummary();
+}
+
+function rmnShort(rmn) {
+  return ({"Amazon Ads": "Amazon", "Criteo Retail Media": "Criteo", "Unlimitail": "Unlimitail"})[rmn] || rmn;
+}
+function rmnClass(rmn) {
+  return ({"Amazon Ads": "amazon", "Criteo Retail Media": "criteo", "Unlimitail": "unlimitail"})[rmn] || "";
+}
+
+function updateSelectionSummary() {
+  const sp = State.selectedProducts.length;
+  const sc = State.selectedCampaigns.length;
+  const cat = State.data.catalog || { products: [], campaigns: [] };
+  // compute covered networks
+  const covered = new Set();
+  if (sp || sc) {
+    for (const p of cat.products) {
+      if (State.selectedProducts.includes(p.name)) (p.rmns || []).forEach(r => covered.add(r));
+    }
+    for (const c of cat.campaigns) {
+      if (State.selectedCampaigns.includes(c.id)) covered.add(c.rmn);
+    }
+  }
+  const sum = document.getElementById("sel-summary");
+  const goBtn = document.getElementById("sel-go");
+  if (sp === 0 && sc === 0) {
+    sum.textContent = "No selection active.";
+    goBtn.disabled = true;
+    goBtn.textContent = "Select at least one item";
+  } else {
+    const parts = [];
+    if (sp) parts.push(`${sp} product${sp > 1 ? "s" : ""}`);
+    if (sc) parts.push(`${sc} campaign${sc > 1 ? "s" : ""}`);
+    const cov = Array.from(covered).map(rmnShort).join(", ") || "—";
+    sum.innerHTML = `${parts.join(" × ")} selected — coverage: ${cov}`;
+    goBtn.disabled = false;
+    goBtn.textContent = "Analyze selection →";
+  }
+}
+
+document.getElementById("sel-go").addEventListener("click", () => {
+  if (document.getElementById("sel-go").disabled) return;
+  goAct4();
+});
+document.getElementById("sel-go-all").addEventListener("click", () => {
+  const cat = State.data.catalog || { products: [], campaigns: [] };
+  State.selectedProducts = (cat.products || []).map(p => p.name);
+  State.selectedCampaigns = (cat.campaigns || []).map(c => c.id);
+  goAct4();
+});
+
+function renderMarkdown(text) {
+  let html = text
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+  html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  const lines = html.split("\n");
+  let out = [], inList = null;
+  for (const ln of lines) {
+    if (/^##\s+(.+)/.test(ln)) {
+      if (inList) { out.push(`</${inList}>`); inList = null; }
+      out.push(`<h2>${ln.replace(/^##\s+/, "")}</h2>`);
+    } else if (/^###\s+(.+)/.test(ln)) {
+      if (inList) { out.push(`</${inList}>`); inList = null; }
+      out.push(`<h3>${ln.replace(/^###\s+/, "")}</h3>`);
+    } else if (/^[-*]\s+(.+)/.test(ln)) {
+      if (inList !== "ul") { if (inList) out.push(`</${inList}>`); out.push("<ul>"); inList = "ul"; }
+      out.push(`<li>${ln.replace(/^[-*]\s+/, "")}</li>`);
+    } else if (/^\d+\.\s+(.+)/.test(ln)) {
+      if (inList !== "ol") { if (inList) out.push(`</${inList}>`); out.push("<ol>"); inList = "ol"; }
+      out.push(`<li>${ln.replace(/^\d+\.\s+/, "")}</li>`);
+    } else if (ln.trim() === "") {
+      if (inList) { out.push(`</${inList}>`); inList = null; }
+      out.push("");
+    } else {
+      if (inList) { out.push(`</${inList}>`); inList = null; }
+      out.push(`<p>${ln}</p>`);
+    }
+  }
+  if (inList) out.push(`</${inList}>`);
+  return out.join("\n").replace(/\n{2,}/g, "\n");
+}
+
+function escapeAttr(s) { return s.replace(/"/g, "&quot;"); }
+
+async function streamSSE(url, opts, onToken, onError) {
+  const out = document.getElementById("ai-output");
+  out.innerHTML = `<span class="thinking"><span></span><span></span><span></span></span><span class="thinking-text">Analyzing…</span>`;
+  let raw = "";
+  try {
+    const resp = await fetch(url, opts);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const parts = buf.split(/\r?\n\r?\n/);
+      buf = parts.pop();
+      for (const evt of parts) {
+        if (!evt.trim()) continue;
+        let ev = "message", data = "";
+        for (const ln of evt.split(/\r?\n/)) {
+          if (ln.startsWith(":")) continue;
+          if (ln.startsWith("event:")) ev = ln.slice(6).trim();
+          else if (ln.startsWith("data:")) data += ln.slice(5).replace(/^ /, "");
+        }
+        if (!data) continue;
+        try {
+          const j = JSON.parse(data);
+          if (ev === "token") {
+            raw += j.text;
+            out.innerHTML = renderMarkdown(raw);
+            out.scrollTop = out.scrollHeight;
+          } else if (ev === "error") {
+            out.innerHTML = `<div class="ai-error">Error: ${j.message}</div>`;
+            return;
+          }
+        } catch {}
+      }
+    }
+  } catch (e) {
+    out.innerHTML = `<div class="ai-error">Error: ${e.message}</div>`;
+  } finally {
+    State.streaming = false;
+  }
+}
+
+document.querySelectorAll(".scenario-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (State.streaming) return;
+    State.streaming = true;
+    const persona = btn.dataset.persona;
+    const f = filterParams();
+    streamSSE(`./api/brief?mode=${encodeURIComponent(State.mode)}&persona=${persona}${f ? "&" + f : ""}`, { method: "POST" });
+  });
+});
+
+function submitQuestion(question) {
+  if (State.streaming || !question.trim()) return;
+  State.streaming = true;
+  streamSSE("./api/ask", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      question, mode: State.mode,
+      products: State.selectedProducts || [],
+      campaigns: State.selectedCampaigns || [],
+    }),
+  });
+}
+
+document.getElementById("ask-form").addEventListener("submit", e => {
+  e.preventDefault();
+  submitQuestion(document.getElementById("ask-input").value);
+});
+
+document.querySelectorAll("#ask-suggestions button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.getElementById("ask-input").value = b.dataset.q;
+    submitQuestion(b.dataset.q);
+  });
+});
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ─── Pedagogical tooltips ──────────────────────────────────────────────── */
+const TOOLTIPS = {
+  roas: "Return On Ad Spend = attributed sales ÷ ad spend. A ROAS of 5x means €1 invested generates €5 of attributed sales. Caveat: each network computes 'its' attributed sales using its own attribution window (7d Amazon, 30d Criteo). Unified ROAS is therefore a directional indicator, not an absolute truth.",
+  spend: "Total ad budget spent over the period, across all networks. Includes CPC (cost-per-click) costs of Sponsored Products, Onsite and Offsite campaigns.",
+  sales: "Sales each network self-attributes after an ad interaction (click or view). The sum of attributed sales across all networks EXCEEDS real sales — that's over-attribution, a core problem of retail media.",
+  ctr: "Click-Through Rate = clicks ÷ impressions × 100. Measures ad attractiveness. A 1.5% CTR is typical for Sponsored Products.",
+  cpc: "Cost Per Click = spend ÷ clicks. The average price you pay for one click on your ad.",
+  anomalies: "Signals detected automatically by openRMN's analytics layer: cross-network cannibalization, underperforming campaigns, suspicious over-attribution.",
+};
+let _activeTip = null;
+let _activeTrigger = null;
+function hideTooltip() {
+  if (_activeTip) { _activeTip.remove(); _activeTip = null; }
+  if (_activeTrigger) { _activeTrigger.classList.remove("active"); _activeTrigger = null; }
+}
+function showTooltip(trigger) {
+  hideTooltip();
+  const key = trigger.dataset.tip;
+  const text = TOOLTIPS[key];
+  if (!text) return;
+  const tip = document.createElement("div");
+  tip.className = "info-tooltip";
+  tip.textContent = text;
+  document.body.appendChild(tip);
+  const r = trigger.getBoundingClientRect();
+  // measure then position
+  tip.style.left = "0px"; tip.style.top = "0px";
+  const tr = tip.getBoundingClientRect();
+  let left = r.left;
+  let top = r.bottom + 8;
+  const vw = window.innerWidth;
+  if (left + tr.width > vw - 12) left = vw - tr.width - 12;
+  if (left < 12) left = 12;
+  if (top + tr.height > window.innerHeight - 12) top = r.top - tr.height - 8;
+  tip.style.left = left + "px";
+  tip.style.top = top + "px";
+  trigger.classList.add("active");
+  _activeTip = tip;
+  _activeTrigger = trigger;
+}
+document.addEventListener("click", e => {
+  const q = e.target.closest && e.target.closest(".info-q");
+  if (q) {
+    e.stopPropagation();
+    if (_activeTrigger === q) hideTooltip();
+    else showTooltip(q);
+    return;
+  }
+  if (_activeTip && !_activeTip.contains(e.target)) hideTooltip();
+});
+window.addEventListener("scroll", hideTooltip, true);
+window.addEventListener("resize", hideTooltip);
+
+/* ─── Intro banner persistence ──────────────────────────────────────────── */
+function setupIntroBanner() {
+  const banner = document.getElementById("intro-banner");
+  if (!banner) return;
+  try {
+    if (localStorage.getItem("openrmn.introHidden") === "1") banner.classList.add("hidden");
+  } catch {}
+  const closeBtn = document.getElementById("intro-close");
+  if (closeBtn) closeBtn.addEventListener("click", () => {
+    banner.classList.add("hidden");
+    try { localStorage.setItem("openrmn.introHidden", "1"); } catch {}
+  });
+}
+
+/* ─── Product drill-down ────────────────────────────────────────────────── */
+function getUniqueProducts() {
+  const raw = State.data.raw || [];
+  const map = {};
+  for (const r of raw) {
+    if (!r.product_name) continue;
+    if (!map[r.product_name]) map[r.product_name] = new Set();
+    map[r.product_name].add(r.rmn);
+  }
+  return Object.entries(map)
+    .map(([name, rmns]) => ({ name, rmns: rmns.size }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function renderProductCards() {
+  const container = document.getElementById("product-cards");
+  if (!container) return;
+  const products = getUniqueProducts();
+  if (!products.length) {
+    container.innerHTML = '<div class="signals-empty">No product identified for this period.</div>';
+    return;
+  }
+  container.innerHTML = products.map(p => `
+    <div class="product-card" data-product="${escapeAttr(p.name)}">
+      <div class="p-name">${p.name}</div>
+      <div class="p-meta">on ${p.rmns} network${p.rmns > 1 ? "s" : ""}</div>
+    </div>
+  `).join("");
+  if (State.selectedProduct) {
+    const c = container.querySelector(`.product-card[data-product="${escapeAttr(State.selectedProduct)}"]`);
+    if (c) c.classList.add("active");
+  }
+  container.querySelectorAll(".product-card").forEach(c => {
+    c.addEventListener("click", () => loadProductDetail(c.dataset.product, c));
+  });
+  // auto-expand if only one product is in scope
+  if (products.length === 1 && !State.selectedProduct) {
+    const only = container.querySelector(".product-card");
+    if (only) loadProductDetail(only.dataset.product, only);
+  }
+}
+
+async function loadProductDetail(product, cardEl) {
+  document.querySelectorAll(".product-card").forEach(c => c.classList.remove("active"));
+  if (cardEl) cardEl.classList.add("active");
+  const box = document.getElementById("product-detail");
+  box.style.display = "block";
+  box.innerHTML = '<div style="color:var(--text-tertiary);font-size:13px;">Loading…</div>';
+  let url = `./api/product-detail?product=${encodeURIComponent(product)}&mode=${encodeURIComponent(State.mode)}`;
+  if (State.selectedCampaigns && State.selectedCampaigns.length) {
+    url += "&campaigns=" + State.selectedCampaigns.map(encodeURIComponent).join(",");
+  }
+  try {
+    const data = await fetchJSON(url);
+    State.selectedProduct = product;
+    renderProductDetail(data);
+    updateSuggestionsForProduct(product);
+  } catch (e) {
+    box.innerHTML = `<div class="ai-error">Error: ${e.message}</div>`;
+  }
+}
+
+function renderProductDetail(data) {
+  const box = document.getElementById("product-detail");
+  const order = ["Amazon Ads", "Criteo Retail Media", "Unlimitail"];
+
+  const miniCards = order.map(rmn => {
+    const p = RMN_PALETTE[rmn] || { css: "var(--text-primary)" };
+    const r = (data.by_rmn || []).find(x => x.rmn === rmn);
+    if (!r) {
+      return `<div class="product-mini-card absent" style="border-left-color:${p.css}">
+        <h4 style="color:${p.css}">${rmn}</h4>
+        <div style="font-size:12px;color:var(--text-tertiary);">Not present for this product</div>
+      </div>`;
+    }
+    return `<div class="product-mini-card" style="border-left-color:${p.css}">
+      <h4 style="color:${p.css}">${rmn}</h4>
+      <div class="mm-row"><span class="mm-label">Spend</span><span class="mm-value">${fmtEur(r.spend)}</span></div>
+      <div class="mm-row"><span class="mm-label">ROAS</span><span class="mm-value">${fmtNum(r.roas)}x</span></div>
+      <div class="mm-row"><span class="mm-label">CTR</span><span class="mm-value">${fmtPct(r.ctr)}</span></div>
+      <div class="mm-row"><span class="mm-label">CPC</span><span class="mm-value">${fmtEurC(r.cpc)}</span></div>
+      <div class="mm-row"><span class="mm-label">Units</span><span class="mm-value">${fmtNum(r.units)}</span></div>
+    </div>`;
+  }).join("");
+
+  const neu = data.neutrality;
+  let alert = "";
+  if (neu && neu.over_attribution_ratio > 1.3) {
+    alert = `<div class="over-attr-alert">
+      <strong>Over-attribution alert</strong>
+      The 3 networks collectively self-attribute ${fmtNum(neu.over_attribution_ratio)}x more sales than the estimated real volume for this product. A typical cross-network over-attribution case that only an independent third party can arbitrate.
+    </div>`;
+  }
+
+  const safeName = String(data.product_name || State.selectedProduct || "");
+  box.innerHTML = `
+    <div class="product-detail-head">
+      <h3>${safeName}</h3>
+      <button class="product-detail-close" id="product-close" type="button">✕ Close</button>
+    </div>
+    <div class="product-mini-cards">${miniCards}</div>
+    <div class="product-chart-wrap"><canvas id="product-chart"></canvas></div>
+    ${alert}
+    <button class="product-ai-btn" id="product-ai-btn" type="button">Ask the AI to analyze this product →</button>
+  `;
+
+  document.getElementById("product-close").addEventListener("click", closeProductDetail);
+  document.getElementById("product-ai-btn").addEventListener("click", () => {
+    const qstr = `Analyze the product ${safeName}: why do the ROAS values diverge across the 3 networks, and what do you recommend?`;
+    document.getElementById("ask-input").value = qstr;
+    submitQuestion(qstr);
+  });
+
+  const allDates = new Set();
+  (data.by_rmn || []).forEach(r => (r.daily || []).forEach(d => allDates.add(d.date)));
+  const dates = Array.from(allDates).sort();
+  const datasets = order.map(rmn => {
+    const r = (data.by_rmn || []).find(x => x.rmn === rmn);
+    if (!r) return null;
+    const m = {};
+    (r.daily || []).forEach(d => { m[d.date] = d.roas; });
+    const p = RMN_PALETTE[rmn] || { color: "#1C1C1C", dash: [] };
+    return {
+      label: rmn,
+      data: dates.map(d => m[d] != null ? m[d] : null),
+      borderColor: p.color,
+      backgroundColor: "transparent",
+      borderDash: p.dash || [],
+      pointBackgroundColor: p.color,
+      tension: 0.3, pointRadius: 2, borderWidth: 2, spanGaps: true,
+    };
+  }).filter(Boolean);
+
+  if (State.charts["product-chart"]) State.charts["product-chart"].destroy();
+  const ctx = document.getElementById("product-chart").getContext("2d");
+  State.charts["product-chart"] = new Chart(ctx, {
+    type: "line",
+    data: { labels: dates, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: "bottom", labels: { boxWidth: 10, font: { size: 11 } } },
+        tooltip: { callbacks: { label: c => `${c.dataset.label}: ${(c.parsed.y || 0).toFixed(2)}x` } },
+      },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: "ROAS", font: { size: 11 } }, ticks: { font: { size: 10 } } },
+        x: { ticks: { font: { size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+      },
+      interaction: { intersect: false, mode: "index" },
+    },
+  });
+}
+
+function closeProductDetail() {
+  document.getElementById("product-detail").style.display = "none";
+  document.querySelectorAll(".product-card").forEach(c => c.classList.remove("active"));
+  State.selectedProduct = null;
+  updateSuggestionsForProduct(null);
+  if (State.charts["product-chart"]) { State.charts["product-chart"].destroy(); delete State.charts["product-chart"]; }
+}
+
+function updateSuggestionsForProduct(product) {
+  const container = document.getElementById("ask-suggestions");
+  if (!container) return;
+  const existing = container.querySelector("[data-product-suggestion]");
+  if (existing) existing.remove();
+  if (!product) return;
+  const btn = document.createElement("button");
+  btn.dataset.productSuggestion = "1";
+  btn.dataset.q = `Analyze the product ${product}: why do the ROAS values diverge across the 3 networks, and what do you recommend?`;
+  btn.textContent = `Analyze ${product}`;
+  btn.addEventListener("click", () => {
+    document.getElementById("ask-input").value = btn.dataset.q;
+    submitQuestion(btn.dataset.q);
+  });
+  container.insertBefore(btn, container.firstChild);
+}
+
+setupIntroBanner();
+startAct0();
+</script>
+</body>
+</html>

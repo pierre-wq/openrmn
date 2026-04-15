@@ -1,0 +1,6 @@
+pandas
+anthropic
+fastapi
+uvicorn[standard]
+sse-starlette
+httpx
