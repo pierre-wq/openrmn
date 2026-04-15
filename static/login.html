@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>openRMN — Accès au lab</title>
+<title>openRMN — Lab access</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -26,7 +26,8 @@ html, body {
   font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
   min-height: 100vh;
 }
-body { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+body { display: flex; flex-direction: column; align-items: center; padding: 24px; }
+.main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
 .wrap { width: 100%; max-width: 360px; }
 .logo { font-family: "Source Serif 4", Georgia, serif; font-weight: 500; font-size: 18px; color: var(--text-primary); margin-bottom: 48px; text-align: left; }
 h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 500; font-size: 28px; letter-spacing: -0.01em; margin-bottom: 10px; }
@@ -47,21 +48,31 @@ button {
 button:hover { background: var(--accent-hover); }
 button:disabled { background: var(--text-tertiary); cursor: not-allowed; }
 .error { color: var(--error); font-size: 13px; min-height: 18px; margin-top: 4px; }
-.footer { margin-top: 48px; color: var(--text-tertiary); font-size: 12px; text-align: left; }
+.page-footer {
+  width: 100%; padding: 16px 0; margin-top: auto;
+  color: var(--text-tertiary); font-size: 12px; text-align: center;
+}
+.page-footer a { color: var(--text-tertiary); text-decoration: none; }
+.page-footer a:hover { color: var(--accent); text-decoration: underline; }
+.page-footer .sep { margin: 0 8px; opacity: 0.6; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="logo">openRMN</div>
-  <h1>Accès au lab</h1>
-  <p class="sub">Démo privée — saisissez le mot de passe communiqué.</p>
-  <form id="login-form" autocomplete="off">
-    <input type="password" id="pw" placeholder="Mot de passe" autofocus required>
-    <button type="submit" id="submit-btn">Entrer →</button>
-    <div class="error" id="err"></div>
-  </form>
-  <div class="footer">openRMN · v0.3 · MIT</div>
+<div class="main">
+  <div class="wrap">
+    <div class="logo">openRMN</div>
+    <h1>Lab access</h1>
+    <p class="sub">Private demo — enter the password you were given.</p>
+    <form id="login-form" autocomplete="off">
+      <input type="password" id="pw" placeholder="Password" autofocus required>
+      <button type="submit" id="submit-btn">Enter →</button>
+      <div class="error" id="err"></div>
+    </form>
+  </div>
 </div>
+<footer class="page-footer">
+  openRMN<span class="sep">·</span>MIT license<span class="sep">·</span><a href="./how-it-works">How it works</a><span class="sep">·</span><a href="https://github.com/pierre-wq/openrmn" target="_blank" rel="noopener">GitHub</a><span class="sep">·</span>v0.5
+</footer>
 <script>
 const form = document.getElementById("login-form");
 const pw = document.getElementById("pw");
@@ -82,12 +93,12 @@ form.addEventListener("submit", async (e) => {
       return;
     }
     if (r.status === 401) {
-      err.textContent = "Mot de passe incorrect";
+      err.textContent = "Invalid password";
     } else {
-      err.textContent = "Erreur " + r.status;
+      err.textContent = "Error " + r.status;
     }
   } catch (e) {
-    err.textContent = "Erreur réseau : " + e.message;
+    err.textContent = "Network error: " + e.message;
   } finally {
     btn.disabled = false;
     pw.select();

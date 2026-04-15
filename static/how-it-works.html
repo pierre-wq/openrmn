@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>openRMN — How it works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F5F5F4;
+  --bg-card: #FFFFFF;
+  --text-primary: #1C1C1C;
+  --text-secondary: #6B6B6B;
+  --text-tertiary: #9B9B9B;
+  --accent: #2752E7;
+  --accent-hover: #6B82EE;
+  --border: #D5D5D0;
+  --border-light: #E0E0DC;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+}
+body { display: flex; flex-direction: column; min-height: 100vh; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 32px; border-bottom: 1px solid var(--border-light);
+  background: var(--bg-primary); position: sticky; top: 0; z-index: 10;
+}
+.topbar .logo {
+  font-family: "Source Serif 4", Georgia, serif; font-weight: 500; font-size: 18px;
+  color: var(--text-primary);
+}
+.topbar .logo:hover { text-decoration: none; color: var(--accent); }
+.btn-primary {
+  display: inline-block; background: var(--accent); color: #fff; padding: 10px 18px;
+  border-radius: 4px; font-size: 14px; font-weight: 500; border: 0;
+}
+.btn-primary:hover { background: var(--accent-hover); text-decoration: none; color: #fff; }
+.btn-secondary {
+  display: inline-block; background: var(--bg-secondary); color: var(--text-primary);
+  padding: 10px 18px; border-radius: 4px; font-size: 14px; font-weight: 500;
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--border-light); text-decoration: none; color: var(--text-primary); }
+
+.layout {
+  display: grid; grid-template-columns: 1fr; max-width: 1280px; margin: 0 auto;
+  width: 100%; padding: 0 24px;
+}
+@media (min-width: 1024px) {
+  .layout { grid-template-columns: minmax(0, 1fr) 240px; gap: 48px; padding: 0 32px; }
+}
+
+main.doc {
+  max-width: 880px; width: 100%; margin: 0 auto;
+  padding: 48px 32px 96px;
+}
+
+.hero h1 {
+  font-family: "Source Serif 4", Georgia, serif; font-weight: 500;
+  font-size: 48px; line-height: 1.15; letter-spacing: -0.015em;
+  margin-bottom: 20px;
+}
+.hero .lead {
+  font-size: 18px; line-height: 1.6; color: var(--text-secondary);
+  max-width: 640px; margin-bottom: 24px;
+}
+.hero .meta {
+  display: flex; flex-wrap: wrap; gap: 16px; font-size: 13px;
+  color: var(--text-tertiary); margin-bottom: 16px;
+}
+.hero .meta span { display: inline-flex; align-items: center; }
+.hero .meta span + span::before {
+  content: "·"; margin-right: 16px; opacity: 0.7;
+}
+
+h2 {
+  font-family: "Source Serif 4", Georgia, serif; font-weight: 500;
+  font-size: 28px; line-height: 1.25; letter-spacing: -0.01em;
+  margin-top: 64px; margin-bottom: 16px; scroll-margin-top: 96px;
+}
+h3 {
+  font-family: "Inter", sans-serif; font-weight: 500; font-size: 18px;
+  margin-top: 32px; margin-bottom: 10px;
+}
+p { font-size: 16px; line-height: 1.7; max-width: 640px; margin-bottom: 16px; }
+ul, ol { max-width: 640px; margin-bottom: 16px; padding-left: 22px; }
+ul li, ol li { font-size: 16px; line-height: 1.7; margin-bottom: 6px; }
+strong { font-weight: 600; color: var(--text-primary); }
+
+pre {
+  font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px;
+  background: var(--bg-secondary); color: var(--text-primary);
+  padding: 16px 20px; border-radius: 4px; overflow-x: auto;
+  margin: 16px 0; line-height: 1.55;
+}
+code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.92em; }
+p code, li code { background: var(--bg-secondary); padding: 1px 6px; border-radius: 3px; }
+
+.callout {
+  background: var(--bg-secondary); border-left: 3px solid var(--accent);
+  padding: 20px 24px; margin: 24px 0; max-width: 640px; border-radius: 0 4px 4px 0;
+}
+.callout p { margin-bottom: 10px; }
+.callout p:last-child { margin-bottom: 0; }
+.callout strong { display: block; margin-bottom: 8px; font-size: 14px; letter-spacing: 0.01em; }
+
+figure.diagram {
+  margin: 24px 0; max-width: 720px;
+  background: var(--bg-primary); border: 1px solid var(--border-light);
+  border-radius: 4px; padding: 24px; overflow-x: auto;
+}
+figure.diagram svg { display: block; margin: 0 auto; max-width: 100%; height: auto; }
+figure.diagram figcaption {
+  font-size: 14px; color: var(--text-secondary); font-style: italic;
+  text-align: center; margin-top: 14px;
+}
+
+ol.timeline {
+  list-style: none; padding: 0; margin: 24px 0; max-width: 640px;
+}
+ol.timeline li {
+  position: relative; padding: 16px 16px 16px 56px;
+  background: var(--bg-card); border: 1px solid var(--border-light);
+  border-radius: 4px; margin-bottom: 12px; counter-increment: step;
+}
+ol.timeline { counter-reset: step; }
+ol.timeline li::before {
+  content: counter(step); position: absolute; left: 16px; top: 16px;
+  width: 28px; height: 28px; border-radius: 50%; background: var(--bg-secondary);
+  color: var(--accent); font-weight: 600; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+}
+ol.timeline li strong { display: block; margin-bottom: 4px; font-size: 15px; }
+ol.timeline li p { font-size: 14px; color: var(--text-secondary); margin-bottom: 0; max-width: none; }
+
+details.faq {
+  border-top: 1px solid var(--border-light); max-width: 640px;
+}
+details.faq:last-of-type { border-bottom: 1px solid var(--border-light); }
+details.faq summary {
+  padding: 18px 0; cursor: pointer; font-size: 16px; font-weight: 500;
+  list-style: none; display: flex; justify-content: space-between; align-items: center;
+}
+details.faq summary::-webkit-details-marker { display: none; }
+details.faq summary::after {
+  content: "+"; font-size: 20px; color: var(--text-tertiary); font-weight: 400;
+  transition: transform 150ms;
+}
+details.faq[open] summary::after { content: "−"; }
+details.faq .answer { padding-bottom: 18px; }
+details.faq .answer p { font-size: 15px; color: var(--text-secondary); margin-bottom: 10px; }
+details.faq .answer p:last-child { margin-bottom: 0; }
+
+.cta-row {
+  display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
+  margin: 32px 0 16px; max-width: 640px;
+}
+.cta-row .btn-primary, .cta-row .btn-secondary { padding: 14px 24px; font-size: 15px; }
+.cta-note {
+  text-align: center; font-size: 14px; color: var(--text-tertiary);
+  max-width: 640px; margin: 12px auto 0;
+}
+
+aside.toc {
+  display: none;
+}
+@media (min-width: 1024px) {
+  aside.toc {
+    display: block; position: sticky; top: 96px; align-self: start;
+    max-height: calc(100vh - 120px); overflow-y: auto; padding: 48px 0;
+    font-size: 13px; line-height: 1.6;
+  }
+  aside.toc .toc-title {
+    text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px;
+    color: var(--text-tertiary); margin-bottom: 12px; font-weight: 500;
+  }
+  aside.toc ol { list-style: none; padding: 0; margin: 0; max-width: none; }
+  aside.toc li { margin: 0; padding: 0; }
+  aside.toc a {
+    display: block; padding: 6px 0; color: var(--text-secondary);
+    border-left: 2px solid transparent; padding-left: 12px;
+  }
+  aside.toc a:hover { color: var(--accent); text-decoration: none; border-left-color: var(--border); }
+}
+
+.page-footer {
+  width: 100%; padding: 16px 0; margin-top: auto;
+  color: var(--text-tertiary); font-size: 12px; text-align: center;
+  background: var(--bg-primary); border-top: 1px solid var(--border-light);
+}
+.page-footer a { color: var(--text-tertiary); text-decoration: none; }
+.page-footer a:hover { color: var(--accent); text-decoration: underline; }
+.page-footer .sep { margin: 0 8px; opacity: 0.6; }
+
+@media (max-width: 640px) {
+  .hero h1 { font-size: 36px; }
+  main.doc { padding: 32px 20px 64px; }
+  .topbar { padding: 14px 20px; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="logo" href="./">openRMN</a>
+  <a class="btn-primary" href="./login">Launch the demo →</a>
+</header>
+
+<div class="layout">
+
+<main class="doc">
+
+  <section class="hero">
+    <h1>How openRMN works</h1>
+    <p class="lead">The independent retail media analytics layer, explained end-to-end. From OAuth connection to AI-powered insights — every step of the pipeline, in plain English.</p>
+    <div class="meta">
+      <span>Reading time 8 min</span>
+      <span>Last updated 2026-04-15</span>
+      <span>Open methodology — all formulas auditable on GitHub</span>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="case">Meet "Maison Dubois", a coffee advertiser</h2>
+    <p>Let's ground the explanation in a real-world case. Maison Dubois is a French premium coffee brand. They sell 4 SKUs: a Bialetti-style Italian coffee maker, a cast-iron teapot, an insulated mug, and organic coffee filters.</p>
+    <p>Their products are listed on Amazon, Cdiscount (Criteo Retail Media) and Carrefour.fr (Unlimitail). They spend €50k/month on retail media, split across the three networks.</p>
+    <p>Today, their marketing team spends two full days per month exporting three different Excel files, manually normalizing them, and trying to understand which campaigns are actually working. The data doesn't align: Amazon reports in ASINs, Criteo in GTINs, Unlimitail in their own SKU format. Attribution windows differ. Metrics use different names for the same thing. This is the exact problem openRMN solves.</p>
+  </section>
+
+  <section>
+    <h2 id="architecture">The pipeline at a glance</h2>
+    <figure class="diagram">
+      <svg viewBox="0 0 720 540" role="img" aria-label="openRMN pipeline diagram">
+        <style>
+          .box { fill: #FFFFFF; stroke: #D5D5D0; stroke-width: 1; }
+          .box-text { fill: #1C1C1C; font-family: "JetBrains Mono", monospace; font-size: 13px; }
+          .box-sub { fill: #6B6B6B; font-family: "JetBrains Mono", monospace; font-size: 11px; }
+          .link { stroke: #9B9B9B; stroke-width: 1; fill: none; }
+          .arrow { fill: #9B9B9B; }
+          .label { fill: #9B9B9B; font-family: "JetBrains Mono", monospace; font-size: 11px; }
+        </style>
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0,0 L10,5 L0,10 Z" class="arrow"/>
+          </marker>
+        </defs>
+
+        <rect class="box" x="40" y="20" width="160" height="66" rx="3"/>
+        <text class="box-text" x="120" y="48" text-anchor="middle">Amazon Ads</text>
+        <text class="box-sub" x="120" y="68" text-anchor="middle">API</text>
+
+        <rect class="box" x="280" y="20" width="160" height="66" rx="3"/>
+        <text class="box-text" x="360" y="48" text-anchor="middle">Criteo RMN</text>
+        <text class="box-sub" x="360" y="68" text-anchor="middle">API</text>
+
+        <rect class="box" x="520" y="20" width="160" height="66" rx="3"/>
+        <text class="box-text" x="600" y="48" text-anchor="middle">Unlimitail</text>
+        <text class="box-sub" x="600" y="68" text-anchor="middle">API</text>
+
+        <path class="link" d="M120,86 L120,140 L360,140 L360,168" marker-end="url(#arr)"/>
+        <path class="link" d="M360,86 L360,168" marker-end="url(#arr)"/>
+        <path class="link" d="M600,86 L600,140 L360,140" />
+        <text class="label" x="128" y="108">OAuth</text>
+        <text class="label" x="368" y="108">OAuth</text>
+        <text class="label" x="530" y="108">OAuth</text>
+
+        <rect class="box" x="180" y="170" width="360" height="66" rx="3" fill="#F5F5F4"/>
+        <text class="box-text" x="360" y="198" text-anchor="middle">Normalization layer</text>
+        <text class="box-sub" x="360" y="218" text-anchor="middle">→ UnifiedRow schema</text>
+
+        <path class="link" d="M360,236 L360,290" marker-end="url(#arr)"/>
+
+        <rect class="box" x="140" y="292" width="440" height="90" rx="3" fill="#F5F5F4"/>
+        <text class="box-text" x="360" y="318" text-anchor="middle">Deterministic analytics</text>
+        <text class="box-sub" x="360" y="340" text-anchor="middle">KPIs · Anomalies</text>
+        <text class="box-sub" x="360" y="360" text-anchor="middle">Trust Score · Audit</text>
+
+        <path class="link" d="M360,382 L360,436" marker-end="url(#arr)"/>
+
+        <rect class="box" x="140" y="438" width="440" height="86" rx="3" fill="#F5F5F4"/>
+        <text class="box-text" x="360" y="464" text-anchor="middle">AI agent (Claude)</text>
+        <text class="box-sub" x="360" y="484" text-anchor="middle">Executive briefs</text>
+        <text class="box-sub" x="360" y="504" text-anchor="middle">Free-form Q&amp;A</text>
+      </svg>
+      <figcaption>Every step is documented below. All code is open source.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2 id="connection">Step 1 — Connecting your retail media accounts</h2>
+    <p>When Maison Dubois signs into openRMN for the first time, they're guided through connecting their three retail media accounts. For each network, the flow is the same:</p>
+    <ol>
+      <li>Click "Connect" on the Amazon Ads card.</li>
+      <li>Get redirected to amazon.com, where they log in with their regular Amazon Advertising credentials.</li>
+      <li>Amazon asks: "Do you authorize openRMN to read your advertising performance data?" They click Yes.</li>
+      <li>They're redirected back to openRMN, now connected. Takes 20 seconds.</li>
+    </ol>
+    <div class="callout">
+      <strong>What actually happens under the hood</strong>
+      <p>Amazon returns a refresh token — a long-lived credential that openRMN stores encrypted in the server's <code>.env</code> file. No password is ever stored. openRMN can now query the Amazon Ads API 24/7 on behalf of Maison Dubois, strictly read-only, strictly on their account.</p>
+      <p>Maison Dubois can revoke access at any time from their Amazon Ads console, killing the refresh token instantly. Same pattern for Criteo and Unlimitail.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="ingestion">Step 2 — Fetching the data (nightly, automatic)</h2>
+    <p>Every night at 3 AM, openRMN calls the three APIs and requests the last 30 days of performance data. Here's what each network actually returns.</p>
+
+    <h3>Amazon Ads API response (excerpt)</h3>
+<pre><code>{
+  "date": "2026-04-14",
+  "campaignId": "234567890",
+  "campaignName": "SP_Cafetiere_Defense",
+  "asin": "B07ABCD123",
+  "productName": "Bialetti Moka Express Premium 6 cups",
+  "impressions": 12500,
+  "clicks": 187,
+  "cost": 143.25,
+  "sales7d": 892.50,
+  "unitsSold7d": 28
+}</code></pre>
+
+    <h3>Criteo Retail Media API response (excerpt)</h3>
+<pre><code>{
+  "date": "2026-04-14",
+  "line_item_id": "LI-99887766",
+  "line_item_name": "Onsite Cdiscount Coffee",
+  "product_gtin": "3700987654321",
+  "product_name": "Cafetiere Italienne Bialetti 6 tasses",
+  "impressions": 8200,
+  "clicks": 94,
+  "spend": 42.30,
+  "attributed_sales_30d": 376.80,
+  "attributed_units_30d": 12
+}</code></pre>
+
+    <h3>Unlimitail API response (excerpt)</h3>
+<pre><code>{
+  "report_date": "2026-04-14",
+  "campaign_ref": "UNL-CMP-55213",
+  "campaign_label": "Carrefour Cafe Premium",
+  "retailer_sku": "UNL-9988",
+  "article_title": "Cafetiere italienne Bialetti 6T",
+  "views": 5600,
+  "engagements": 71,
+  "invested_eur": 28.90,
+  "attributed_revenue_14d": 214.40,
+  "attributed_qty_14d": 7
+}</code></pre>
+
+    <p>Same product. Same day. Three completely different formats. Amazon calls its identifier an "ASIN", Criteo calls it a "GTIN". Amazon says "cost", Criteo says "spend". Amazon attributes sales over 7 days, Criteo over 30 days. This is the chaos openRMN translates.</p>
+  </section>
+
+  <section>
+    <h2 id="schema">Step 3 — Normalization (the heart of the product)</h2>
+    <p>openRMN takes these three formats and translates them into a single schema we call <code>UnifiedRow</code>. Each row represents "the performance of one product on one network on one day":</p>
+<pre><code>@dataclass
+class UnifiedRow:
+    date: str                    # ISO format
+    rmn: str                     # "amazon" | "criteo" | "unlimitail"
+    retailer: str                # amazon.fr, cdiscount.com, ...
+    campaign_id: str
+    campaign_name: str
+    sku: str                     # ASIN, GTIN, or internal SKU
+    product_name: str            # Normalized product name
+    impressions: int
+    clicks: int
+    spend_eur: float
+    units_sold: int
+    sales_eur: float
+    new_to_brand_units: int</code></pre>
+    <p>The same product now has comparable rows across networks. It's the equivalent of putting every network into the same currency and the same language. Every subsequent calculation — KPIs, anomaly detection, trust scoring, double-counting audit — operates on this unified schema.</p>
+  </section>
+
+  <section>
+    <h2 id="matching">Step 4 — Matching products across networks</h2>
+    <p>This is the most technically delicate question in cross-network retail media analytics: <strong>how do you know that Amazon's <code>B07ABCD123</code> and Criteo's <code>3700987654321</code> refer to the same physical product?</strong></p>
+    <p>openRMN supports three levels of matching, from simplest to most rigorous.</p>
+
+    <h3>Level 1 — Product name matching (MVP default)</h3>
+    <p>We normalize <code>product_name</code> (lowercase, strip accents, remove articles like "the" and "la") and match by string similarity. Works in 60-70% of cases for a clean catalog. Fragile: "Bialetti Italian coffee maker" vs "Bialetti 6-cup coffee maker Premium" won't match.</p>
+
+    <h3>Level 2 — EAN/GTIN matching (recommended for production)</h3>
+    <p>The EAN (European Article Number, 13 digits) is a universal identifier. The same barcode <code>3700987654321</code> identifies the same physical product on Amazon, Cdiscount and Carrefour. This is the clean solution.</p>
+    <p>The catch: Amazon does not systematically expose the EAN in its API (it exposes the proprietary ASIN instead). openRMN requires the advertiser to provide a lookup table — a simple CSV from their PIM (Product Information Management system):</p>
+<pre><code>ean,asin,criteo_sku,unlimitail_sku,internal_reference
+3700987654321,B07ABCD123,CRT-4455,UNL-9988,BIALETTI-6T
+3700987654322,B07ABCE456,CRT-4456,UNL-9989,TETSUBIN-ART
+3700987654323,B07ABCE789,CRT-4457,UNL-9990,THERMOS-500
+3700987654324,B07ABCEFGH,CRT-4458,UNL-9991,BIOFILTER-100</code></pre>
+    <p>A 10-minute task for the e-commerce team, because this table already exists in their PIM. From that point on, every join is clean and unambiguous.</p>
+
+    <h3>Level 3 — AI-powered fuzzy matching</h3>
+    <p>For advertisers who cannot provide a mapping table, openRMN can leverage a sentence embedding model (e.g. sentence-transformers) to semantically understand that "Bialetti Italian coffee maker 6 cups" and "Bialetti Moka Express Premium 6 cups" likely refer to the same product. Cosine similarity above 0.85 triggers an auto-match, between 0.70 and 0.85 prompts the user for confirmation.</p>
+  </section>
+
+  <section>
+    <h2 id="aggregation">Step 5 — Centralizing data on a single product</h2>
+    <p>When the marketing director of Maison Dubois clicks on "Bialetti Italian coffee maker" in openRMN, here's what the tool does in under one second:</p>
+    <ol>
+      <li>Filter the unified DataFrame on <code>product_name = "Bialetti Italian coffee maker"</code> (or <code>ean = "3700987654321"</code> in v2).</li>
+      <li>Retrieve all matching rows — typically 3 networks × 14 days = 42 rows.</li>
+      <li>Aggregate per network:
+        <ul>
+          <li>Amazon: €2,047 spent, €7,851 attributed sales, 4.16x ROAS</li>
+          <li>Criteo: €892 spent, €3,420 attributed sales, 3.83x ROAS</li>
+          <li>Unlimitail: €456 spent, €2,107 attributed sales, 4.62x ROAS</li>
+        </ul>
+      </li>
+      <li>Compute derived metrics (CTR, CPC, units sold, new-to-brand share).</li>
+      <li>Run anomaly detection on this specific product.</li>
+      <li>Run the double-counting audit: <strong>the sum of declared sales is €13,378 but estimated real sales are only €9,200 — meaning €4,178 of over-attribution (31%)</strong>.</li>
+      <li>Pass everything to the AI agent, which writes a narrative brief in the advertiser's language.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2 id="analytics">Step 6 — KPIs, anomalies and trust scores</h2>
+    <p>Before the AI agent is even called, a deterministic Python layer (pandas + pure functions) computes everything that must be verifiable and reproducible. This is critical: the LLM never invents numbers. It only interprets what the deterministic layer has already computed.</p>
+
+    <h3>Unified KPIs</h3>
+    <p>Simple aggregates: total spend, total attributed sales, unified ROAS, breakdown per network. All computed with pandas groupby operations. Full code in <code>agent.py</code>, function <code>compute_kpis()</code>.</p>
+
+    <h3>Anomaly detection</h3>
+    <p>Two rule-based detectors in v0.5:</p>
+    <p><strong>Cross-network cannibalization</strong>: when the same product shows ROAS values that diverge significantly between two networks (ratio &gt; 1.8 or &lt; 0.55), flag it. A potential signal that one network is cannibalizing another, or that attribution methodologies differ enough to produce misleading numbers.</p>
+    <p><strong>Underperforming campaigns</strong>: any campaign with &gt; €5,000 spend and ROAS &lt; 1.5 is flagged as underperforming.</p>
+
+    <h3>Trust Score per network</h3>
+    <p>For each network, a 0-100 score based on 4 weighted components:</p>
+    <ul>
+      <li>Internal consistency (30%): variance of daily ROAS</li>
+      <li>Cross-network convergence (25%): correlation with other networks on common SKUs</li>
+      <li>Methodology transparency (25%): whether the network publicly documents its attribution window and logic</li>
+      <li>Data freshness (20%): lag between measurement and API availability</li>
+    </ul>
+    <p>All formulas are open and auditable in <code>agent.py</code> → function <code>trust_score()</code>.</p>
+
+    <h3>Double-counting audit</h3>
+    <p>For each shared SKU, estimates "real" sales as <code>max(sales_per_network) × 1.1</code> (a defensible heuristic: the most aggressive network is likely closest to the truth, plus 10% for sales outside of advertised impressions). The difference between summed declared sales and estimated real sales is the over-attribution amount, visualized as a Sankey diagram.</p>
+    <p>Function: <code>double_counting_audit()</code>.</p>
+
+    <h3>Methodology harmonization simulator</h3>
+    <p>Every network uses a different attribution window (Amazon 7d, Criteo 30d, Unlimitail 14d). The simulator rescales each network's attributed sales using the rule <code>coefficient = sqrt(target_window / actual_window)</code> and shows before/after KPIs. Gives the advertiser an answer to "what would my dashboard look like if everyone followed the same rules?".</p>
+  </section>
+
+  <section>
+    <h2 id="ai-agent">Step 7 — The AI brief layer</h2>
+    <p>The AI agent (Claude Sonnet 4.5) never touches the raw data directly. It receives a structured payload containing:</p>
+<pre><code>{
+  "selection_scope": "Full portfolio — 4 products, 3 networks, 14 days",
+  "aggregated_kpis": { ... all computed numbers ... },
+  "anomalies_detected": [ ... cannibalization + underperforming ... ],
+  "trust_scores": { "amazon": 78, "criteo": 65, "unlimitail": 71 },
+  "double_counting_audit": {
+    "total_attributed": 458200,
+    "estimated_real": 320500,
+    "overlap_amount": 137700,
+    "overlap_pct": 43.0
+  }
+}</code></pre>
+    <p>Depending on the persona selected (Executive, Operational, or Auditor), the system prompt changes entirely, producing three completely different briefs from the same underlying data. For free-form Q&amp;A, the user's question is appended to the same payload with a generalist analyst system prompt.</p>
+    <p>Streaming is via Server-Sent Events: the brief appears in the sidebar token by token, just like ChatGPT.</p>
+    <div class="callout">
+      <strong>Why this architecture matters</strong>
+      <p>Numbers come from pandas. Interpretation comes from Claude. This separation is deliberate: every figure in the brief can be cross-checked against the deterministic layer. The AI cannot hallucinate KPIs because it doesn't compute them — it only narrates what has already been calculated.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="end-result">The end result for Maison Dubois</h2>
+    <p>After a 30-minute onboarding (10 min for the three OAuth connections, 10 min for uploading the EAN mapping CSV, 10 min for the first data fetch), Maison Dubois wakes up the next day with:</p>
+    <ul>
+      <li>A unified view of all their retail media campaigns across Amazon, Criteo and Unlimitail, in one dashboard.</li>
+      <li>Automatic anomaly alerts when a SKU starts behaving strangely on one network.</li>
+      <li>A Trust Score telling them which network's numbers they should trust more (spoiler: usually not the one with the highest declared ROAS).</li>
+      <li>A double-counting audit showing exactly how much of their reported performance is over-attributed noise.</li>
+      <li>A conversational AI analyst they can ask anything — "why did my Criteo ROAS drop last Tuesday?" — with answers grounded in their actual data.</li>
+    </ul>
+    <p>And all of it without opening Excel, ever again.</p>
+  </section>
+
+  <section>
+    <h2 id="onboarding">Onboarding an advertiser from zero</h2>
+    <ol class="timeline">
+      <li>
+        <strong>Minute 0-10 — Connect the accounts</strong>
+        <p>Three OAuth flows: Amazon Ads, Criteo Retail Media, Unlimitail. No password shared with openRMN, only scoped read-only tokens.</p>
+      </li>
+      <li>
+        <strong>Minute 10-20 — Upload product mapping</strong>
+        <p>A single CSV with EAN, ASIN, Criteo SKU, Unlimitail SKU per product. Already exists in the advertiser's PIM.</p>
+      </li>
+      <li>
+        <strong>Minute 20-30 — First data fetch</strong>
+        <p>openRMN pulls 30 days of historical data from each API, normalizes it into UnifiedRows, computes KPIs and scores.</p>
+      </li>
+      <li>
+        <strong>Day 2 — First briefs</strong>
+        <p>Marketing team runs their first Executive and Operational briefs, starts exploring per-product drill-downs.</p>
+      </li>
+      <li>
+        <strong>Week 2 — First decisions</strong>
+        <p>Budget reallocations based on the Trust Score and the double-counting audit. Typical first-month savings: 10-20% of wasted spend identified.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2 id="faq">Frequently asked questions</h2>
+
+    <details class="faq">
+      <summary>How long does it take to onboard a new advertiser?</summary>
+      <div class="answer"><p>Thirty minutes. Ten for the three OAuth connections, ten for uploading the product mapping CSV, ten for the first data fetch to complete.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>What happens if a retail media network changes its API tomorrow?</summary>
+      <div class="answer"><p>We maintain the connectors like any SaaS vendor would. The advantage of being open source: the community can contribute fixes. Same approach as Airbyte for data connectors or LangChain for LLM integrations.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>How do you guarantee your "estimated real sales" are accurate?</summary>
+      <div class="answer"><p>Today, we don't — it's a documented and auditable heuristic (max per network × 1.1). Going further requires plugging in a third-party panel source (e.g. Wakoopa, NielsenIQ, Kantar Worldpanel). This is exactly where openRMN transitions from a free open-source tool to a premium service with an external source of truth.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>Is my data shared with any third party?</summary>
+      <div class="answer"><p>The only third party that sees aggregated (non-PII) campaign data is Anthropic (Claude API), and only for the purpose of generating natural language briefs. No advertiser identifiers, no shopper-level data, no PII is ever transmitted. Anthropic's commercial terms prohibit using API inputs for model training.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>Can I self-host openRMN?</summary>
+      <div class="answer"><p>Yes. The entire stack is open source and runs on any Linux server with Python 3.11+. Full deployment guide in the repository README.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>Why open source?</summary>
+      <div class="answer"><p>Because "neutral third party" and "proprietary black box" are contradictions. If we claim to audit the walled gardens, our own code must be auditable too. Every Trust Score formula, every attribution harmonization coefficient, every anomaly detection rule is visible in the GitHub repo.</p></div>
+    </details>
+  </section>
+
+  <section>
+    <h2 id="cta">Ready to see it in action?</h2>
+    <div class="cta-row">
+      <a class="btn-primary" href="./login">Launch the live demo →</a>
+      <a class="btn-secondary" href="https://github.com/pierre-wq/openrmn" target="_blank" rel="noopener">View source on GitHub ↗</a>
+    </div>
+    <p class="cta-note">Prefer a guided walkthrough? Email <a href="mailto:pierre@holco.co">pierre@holco.co</a></p>
+  </section>
+
+</main>
+
+<aside class="toc" aria-label="Table of contents">
+  <div class="toc-title">On this page</div>
+  <ol>
+    <li><a href="#case">1. The concrete case</a></li>
+    <li><a href="#architecture">2. Architecture overview</a></li>
+    <li><a href="#connection">3. Connection &amp; OAuth</a></li>
+    <li><a href="#ingestion">4. Data ingestion</a></li>
+    <li><a href="#schema">5. Unified schema</a></li>
+    <li><a href="#matching">6. Product matching</a></li>
+    <li><a href="#aggregation">7. Per-product aggregation</a></li>
+    <li><a href="#analytics">8. KPIs, anomalies, trust</a></li>
+    <li><a href="#ai-agent">9. The AI agent</a></li>
+    <li><a href="#end-result">10. What the advertiser sees</a></li>
+    <li><a href="#onboarding">11. Onboarding timeline</a></li>
+    <li><a href="#faq">12. FAQ</a></li>
+    <li><a href="#cta">13. Get started</a></li>
+  </ol>
+</aside>
+
+</div>
+
+<footer class="page-footer">
+  openRMN<span class="sep">·</span>MIT license<span class="sep">·</span><a href="./how-it-works">How it works</a><span class="sep">·</span><a href="https://github.com/pierre-wq/openrmn" target="_blank" rel="noopener">GitHub</a><span class="sep">·</span>v0.5
+</footer>
+
+</body>
+</html>

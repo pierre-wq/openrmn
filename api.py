@@ -54,6 +54,7 @@ PUBLIC_PATHS = {
     "/login", "/api/login",
     "/api/health",
     "/api/amazon/oauth/start", "/api/amazon/oauth/callback",
+    "/how-it-works",
 }
 PUBLIC_PREFIXES = ("/static/",)
 
@@ -191,6 +192,14 @@ def index():
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": VERSION}
+
+
+@app.get("/how-it-works")
+def how_it_works():
+    return FileResponse(
+        str(STATIC_DIR / "how-it-works.html"),
+        headers={"Cache-Control": "no-cache, must-revalidate"},
+    )
 
 
 # ─── Auth endpoints ────────────────────────────────────────────────────────
