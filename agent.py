@@ -1,12 +1,55 @@
 """openRMN agent — deterministic layer + AI brief (Anthropic)."""
 from __future__ import annotations
 
+import math
 import os
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 import pandas as pd
 
 from connectors import fetch_all
+
+
+RMN_TO_SLUG: Dict[str, str] = {
+    "Amazon Ads": "amazon",
+    "Criteo Retail Media": "criteo",
+    "Unlimitail": "unlimitail",
+}
+SLUG_TO_RMN: Dict[str, str] = {v: k for k, v in RMN_TO_SLUG.items()}
+
+NETWORK_METHODOLOGIES: Dict[str, Dict[str, Any]] = {
+    "amazon": {
+        "attribution_window_days": 7,
+        "attribution_type": "last-click",
+        "includes_view_through": True,
+        "includes_offline_sales": True,
+        "mrc_certified": False,
+        "documentation_url": "https://advertising.amazon.com/help/G3J6L9TLZWJ8XBQ7",
+    },
+    "criteo": {
+        "attribution_window_days": 30,
+        "attribution_type": "last-click",
+        "includes_view_through": False,
+        "includes_offline_sales": False,
+        "mrc_certified": True,
+        "documentation_url": "https://www.criteo.com/legal/measurement-methodology/",
+    },
+    "unlimitail": {
+        "attribution_window_days": 14,
+        "attribution_type": "last-click + assisted",
+        "includes_view_through": True,
+        "includes_offline_sales": True,
+        "mrc_certified": False,
+        "documentation_url": "",
+    },
+}
+
+METHODOLOGY_TRANSPARENCY_SCORES: Dict[str, int] = {
+    "amazon": 90,
+    "criteo": 70,
+    "unlimitail": 60,
+}
 
 
 def compute_kpis(df: pd.DataFrame) -> Dict[str, Any]:
@@ -326,6 +369,318 @@ def neutrality_audit(df: pd.DataFrame) -> Dict[str, Any]:
     }
 
 
+def _grade_from_score(score: float) -> str:
+    if score > 90: return "A+"
+    if score > 85: return "A"
+    if score > 75: return "B+"
+    if score > 65: return "B"
+    if score > 55: return "C+"
+    if score > 45: return "C"
+    return "D"
+
+
+def _safe_clamp(x: float, lo: float = 0.0, hi: float = 100.0) -> float:
+    if x != x:  # NaN
+        return lo
+    return max(lo, min(hi, x))
+
+
+def trust_score(df: pd.DataFrame) -> Dict[str, Any]:
+    """Compute a 0-100 trust score per network.
+    Components (weighted):
+      - internal_consistency 30%  : 100 - CV_ROAS_daily*100
+      - cross_network_convergence 25%: 1 - |share - 1/N| on common SKUs
+      - methodology_transparency 25% : static public-knowledge score
+      - data_freshness 20%        : 100 if <24h, linear to 0 at 7d+
+    """
+    out: Dict[str, Any] = {}
+    if df.empty:
+        return out
+
+    today = pd.Timestamp(datetime.now(timezone.utc).date())
+    total_by_sku_rmn = (
+        df.groupby(["product_name", "rmn"])["sales_eur"].sum().reset_index()
+    )
+    pivot = total_by_sku_rmn.pivot(
+        index="product_name", columns="rmn", values="sales_eur"
+    ).fillna(0)
+    rmns_present = list(pivot.columns)
+    n_rmns = len(rmns_present) if rmns_present else 1
+
+    for rmn, sub in df.groupby("rmn"):
+        slug = RMN_TO_SLUG.get(rmn, str(rmn).lower().replace(" ", "_"))
+
+        daily = sub.groupby("date")[["spend_eur", "sales_eur"]].sum().reset_index()
+        daily = daily[daily["spend_eur"] > 0]
+        if len(daily) >= 2:
+            daily["roas"] = daily["sales_eur"] / daily["spend_eur"]
+            mean = float(daily["roas"].mean())
+            std = float(daily["roas"].std(ddof=0))
+            cv = std / mean if mean > 0 else 1.0
+            ic_score = _safe_clamp(100.0 - cv * 100.0)
+        else:
+            ic_score = 60.0
+
+        conv_num, conv_den = 0.0, 0.0
+        for sku in pivot.index:
+            row = pivot.loc[sku]
+            total = float(row.sum())
+            if total <= 0 or rmn not in row.index:
+                continue
+            share = float(row[rmn]) / total
+            ideal = 1.0 / n_rmns
+            # proximity to fair share (1-|share-ideal|/ideal clamped) then scale 0-100
+            prox = 1.0 - min(1.0, abs(share - ideal) / max(ideal, 1e-9))
+            conv_num += prox * total
+            conv_den += total
+        conv_score = _safe_clamp((conv_num / conv_den) * 100.0 if conv_den > 0 else 50.0)
+
+        mt_score = float(METHODOLOGY_TRANSPARENCY_SCORES.get(slug, 50))
+
+        latest = pd.to_datetime(sub["date"]).max()
+        if pd.isna(latest):
+            freshness_score = 50.0
+        else:
+            age_days = max(0.0, (today - pd.Timestamp(latest)).total_seconds() / 86400.0)
+            if age_days < 1.0:
+                freshness_score = 100.0
+            elif age_days >= 7.0:
+                freshness_score = 0.0
+            else:
+                freshness_score = 100.0 * (1.0 - (age_days - 1.0) / 6.0)
+            freshness_score = _safe_clamp(freshness_score)
+
+        weights = {"internal_consistency": 30, "cross_network_convergence": 25,
+                   "methodology_transparency": 25, "data_freshness": 20}
+        scores = {"internal_consistency": ic_score,
+                  "cross_network_convergence": conv_score,
+                  "methodology_transparency": mt_score,
+                  "data_freshness": freshness_score}
+        global_score = sum(scores[k] * weights[k] for k in weights) / 100.0
+        grade = _grade_from_score(global_score)
+
+        meth = NETWORK_METHODOLOGIES.get(slug, {})
+        findings: List[str] = []
+        if meth:
+            win = meth.get("attribution_window_days")
+            typ = meth.get("attribution_type", "—")
+            findings.append(f"Méthodologie d'attribution {typ} sur {win} jours"
+                            + (" (MRC certifié)" if meth.get("mrc_certified") else ""))
+        if conv_score < 55:
+            findings.append(
+                f"Sur- ou sous-attribution probable sur les SKU communs "
+                f"(convergence {conv_score:.0f}/100)."
+            )
+        elif conv_score > 80:
+            findings.append(f"Part cohérente sur les SKU communs (convergence {conv_score:.0f}/100).")
+        if freshness_score >= 85:
+            findings.append("Données fraîches (lag <24h).")
+        elif freshness_score <= 30:
+            findings.append("Données potentiellement obsolètes (>5 jours).")
+        if ic_score < 50:
+            findings.append(f"ROAS quotidien très volatile (consistance {ic_score:.0f}/100).")
+        if not findings:
+            findings.append("Aucun signal d'alerte fort.")
+
+        out[slug] = {
+            "rmn_label": rmn,
+            "score": int(round(global_score)),
+            "grade": grade,
+            "components": {
+                "internal_consistency": {
+                    "score": int(round(ic_score)), "weight": weights["internal_consistency"],
+                    "explanation": ("Variance du ROAS quotidien sur la période. "
+                                    "Faible variance = score élevé."),
+                },
+                "cross_network_convergence": {
+                    "score": int(round(conv_score)), "weight": weights["cross_network_convergence"],
+                    "explanation": ("Écart de la part de ventes attribuées vs part équitable "
+                                    "sur les SKU communs. Une régie qui attribue beaucoup plus "
+                                    "que les autres a une convergence faible."),
+                },
+                "methodology_transparency": {
+                    "score": int(round(mt_score)), "weight": weights["methodology_transparency"],
+                    "explanation": ("Fenêtre d'attribution publiée, type d'attribution documenté, "
+                                    "certification MRC."),
+                },
+                "data_freshness": {
+                    "score": int(round(freshness_score)), "weight": weights["data_freshness"],
+                    "explanation": ("Délai entre la mesure et l'ingestion via API. "
+                                    "Plus c'est frais, mieux c'est."),
+                },
+            },
+            "key_findings": findings[:4],
+        }
+    return out
+
+
+def methodology_comparison() -> Dict[str, Dict[str, Any]]:
+    """Return declared methodologies per network."""
+    return {slug: dict(meta) for slug, meta in NETWORK_METHODOLOGIES.items()}
+
+
+def simulate_harmonization(
+    df: pd.DataFrame,
+    target_window_days: int = 7,
+    target_type: str = "last-click",
+) -> Dict[str, Any]:
+    """Apply a deduplication coefficient based on declared windows.
+    Heuristic: attributed sales grow as sqrt(window_days).
+    coefficient = sqrt(target_window / actual_window)
+    """
+    if df.empty:
+        return {
+            "before": compute_kpis(df), "after": compute_kpis(df),
+            "delta_per_network": {}, "target_window_days": target_window_days,
+            "target_type": target_type,
+            "assumptions": "Coefficient de dé-duplication = sqrt(target_window / actual_window).",
+        }
+
+    before_kpis = compute_kpis(df)
+
+    df2 = df.copy()
+    per_network_coef: Dict[str, float] = {}
+    for rmn, sub_idx in df2.groupby("rmn").groups.items():
+        slug = RMN_TO_SLUG.get(rmn, str(rmn).lower().replace(" ", "_"))
+        meth = NETWORK_METHODOLOGIES.get(slug, {})
+        actual_w = float(meth.get("attribution_window_days", target_window_days))
+        if actual_w <= 0:
+            coef = 1.0
+        else:
+            coef = math.sqrt(target_window_days / actual_w)
+        per_network_coef[slug] = round(coef, 4)
+        df2.loc[sub_idx, "sales_eur"] = df2.loc[sub_idx, "sales_eur"] * coef
+
+    after_kpis = compute_kpis(df2)
+
+    delta: Dict[str, Any] = {}
+    for rmn, b in before_kpis.get("breakdown_by_rmn", {}).items():
+        a = after_kpis.get("breakdown_by_rmn", {}).get(rmn, {})
+        slug = RMN_TO_SLUG.get(rmn, str(rmn).lower().replace(" ", "_"))
+        roas_b = float(b.get("roas", 0) or 0)
+        roas_a = float(a.get("roas", 0) or 0)
+        pct = round(((roas_a / roas_b) - 1.0) * 100.0, 1) if roas_b else 0.0
+        delta[slug] = {
+            "rmn_label": rmn,
+            "coef": per_network_coef.get(slug, 1.0),
+            "roas_before": round(roas_b, 2),
+            "roas_after": round(roas_a, 2),
+            "delta_pct": pct,
+            "sales_before_eur": b.get("sales_eur", 0),
+            "sales_after_eur": a.get("sales_eur", 0),
+        }
+
+    roas_values_b = [v["roas_before"] for v in delta.values() if v["roas_before"]]
+    roas_values_a = [v["roas_after"] for v in delta.values() if v["roas_after"]]
+    spread_before = (max(roas_values_b) / min(roas_values_b) - 1) * 100 if roas_values_b and min(roas_values_b) > 0 else 0
+    spread_after = (max(roas_values_a) / min(roas_values_a) - 1) * 100 if roas_values_a and min(roas_values_a) > 0 else 0
+
+    return {
+        "before": before_kpis,
+        "after": after_kpis,
+        "delta_per_network": delta,
+        "target_window_days": target_window_days,
+        "target_type": target_type,
+        "roas_spread_before_pct": round(spread_before, 1),
+        "roas_spread_after_pct": round(spread_after, 1),
+        "assumptions": "Coefficient de dé-duplication = sqrt(target_window / actual_window).",
+    }
+
+
+def double_counting_audit(df: pd.DataFrame) -> Dict[str, Any]:
+    """Estimate cross-network over-attribution.
+    Rule: real_sales = max(sales_per_rmn) * 1.1, overlap = total_attributed - real.
+    Per-network allocation is proportional: real_rmn = sales_rmn * (real / total).
+    """
+    if df.empty:
+        return {
+            "total_attributed": 0.0, "estimated_real": 0.0, "overlap_amount": 0.0,
+            "overlap_pct": 0.0, "per_product": [], "per_network": [], "flows": [],
+            "note": "Méthodologie : ventes réelles estimées = max(ventes par régie) × 1.1.",
+        }
+
+    by_prod_rmn = (
+        df.groupby(["product_name", "rmn"])["sales_eur"].sum().reset_index()
+    )
+    pivot = by_prod_rmn.pivot(index="product_name", columns="rmn", values="sales_eur").fillna(0)
+
+    total_attributed = 0.0
+    total_real = 0.0
+    per_product: List[Dict[str, Any]] = []
+    per_rmn_attr: Dict[str, float] = {}
+
+    for sku in pivot.index:
+        row = pivot.loc[sku]
+        total_row = float(row.sum())
+        if total_row <= 0:
+            continue
+        if (row > 0).sum() < 2:
+            # not a common SKU cross-network — include attribution anyway, but overlap=0
+            real_sku = total_row
+        else:
+            real_sku = float(row.max()) * 1.1
+            real_sku = min(real_sku, total_row)
+        overlap_sku = max(0.0, total_row - real_sku)
+        total_attributed += total_row
+        total_real += real_sku
+        per_product.append({
+            "product": sku,
+            "total_attributed": round(total_row, 2),
+            "estimated_real": round(real_sku, 2),
+            "overlap": round(overlap_sku, 2),
+            "overlap_pct": round(100 * overlap_sku / total_row, 1) if total_row else 0.0,
+            "sales_by_rmn": {r: round(float(row[r]), 2) for r in row.index if float(row[r]) > 0},
+        })
+        for r in row.index:
+            per_rmn_attr[r] = per_rmn_attr.get(r, 0.0) + float(row[r])
+
+    overlap_total = max(0.0, total_attributed - total_real)
+    overlap_pct = round(100 * overlap_total / total_attributed, 1) if total_attributed else 0.0
+
+    per_network: List[Dict[str, Any]] = []
+    flows: List[Dict[str, Any]] = []
+    for rmn, attr in per_rmn_attr.items():
+        if attr <= 0:
+            continue
+        real_share = (total_real / total_attributed) if total_attributed else 1.0
+        real_r = attr * real_share
+        overlap_r = attr - real_r
+        slug = RMN_TO_SLUG.get(rmn, str(rmn).lower().replace(" ", "_"))
+        per_network.append({
+            "rmn": rmn, "slug": slug,
+            "attributed": round(attr, 2),
+            "real": round(real_r, 2),
+            "overlap": round(overlap_r, 2),
+            "overlap_pct": round(100 * overlap_r / attr, 1) if attr else 0.0,
+        })
+        flows.append({
+            "from": f"{rmn} attributed", "from_slug": slug,
+            "to": "Real sales", "to_kind": "real",
+            "value": round(real_r, 2),
+        })
+        flows.append({
+            "from": f"{rmn} attributed", "from_slug": slug,
+            "to": "Overlap", "to_kind": "overlap",
+            "value": round(overlap_r, 2),
+        })
+
+    per_network.sort(key=lambda x: -x["attributed"])
+    per_product.sort(key=lambda x: -x["overlap"])
+
+    return {
+        "total_attributed": round(total_attributed, 2),
+        "estimated_real": round(total_real, 2),
+        "overlap_amount": round(overlap_total, 2),
+        "overlap_pct": overlap_pct,
+        "per_product": per_product,
+        "per_network": per_network,
+        "flows": flows,
+        "note": ("Méthodologie : ventes réelles estimées = max(ventes par régie) × 1.1 "
+                 "sur SKU communs. Hypothèse défendable mais à valider avec des données "
+                 "panel tierces (Wakoopa, Nielsen, Kantar Worldpanel)."),
+    }
+
+
 PERSONA_PROMPTS: Dict[str, str] = {
     "executive": """Tu es un conseiller stratégique média qui s'adresse à un CMO.
 Ton brief doit être lisible en 2 minutes. Focus sur les enjeux budgétaires
@@ -364,6 +719,13 @@ SKU communs. Questionne les méthodologies (fenêtres d'attribution, last-click
 vs assisted). Propose un coefficient de pondération pour estimer les ventes
 réelles dé-dupliquées.
 
+Utilise les Trust Scores fournis et les chiffres du double-counting audit
+pour étayer ton rapport. Cite nommément les composants des Trust Scores qui
+pèsent le plus dans tes constats (internal_consistency, cross_network_convergence,
+methodology_transparency, data_freshness) et appuie-toi sur le montant de
+sur-attribution (overlap_amount) et le pourcentage global (overlap_pct) pour
+chiffrer tes conclusions.
+
 Ton de rapport d'audit factuel et prudent. Structure markdown libre mais doit
 inclure :
 
@@ -398,6 +760,24 @@ def build_brief_payload(
     kpis = compute_kpis(df)
     anomalies = detect_anomalies(df)
     audit = neutrality_audit(df)
+    trust = trust_score(df)
+    dbl = double_counting_audit(df)
+    trust_brief = {
+        slug: {
+            "score": t["score"], "grade": t["grade"],
+            "components": {k: v["score"] for k, v in t["components"].items()},
+            "key_findings": t["key_findings"],
+        }
+        for slug, t in trust.items()
+    }
+    dbl_brief = {
+        "total_attributed": dbl.get("total_attributed", 0),
+        "estimated_real": dbl.get("estimated_real", 0),
+        "overlap_amount": dbl.get("overlap_amount", 0),
+        "overlap_pct": dbl.get("overlap_pct", 0),
+        "per_network": dbl.get("per_network", []),
+        "top_products": dbl.get("per_product", [])[:3],
+    }
     scope_lines = []
     if products:
         scope_lines.append(f"Produits dans le périmètre ({len(products)}) : {', '.join(products)}")
@@ -412,7 +792,9 @@ def build_brief_payload(
         f"{scope_block}"
         f"### KPIs agrégés\n{kpis}\n\n"
         f"### Anomalies détectées automatiquement\n{anomalies}\n\n"
-        f"### Audit de neutralité (sur SKU communs cross-régie)\n{audit}\n"
+        f"### Audit de neutralité (sur SKU communs cross-régie)\n{audit}\n\n"
+        f"### Trust Score par régie\n{trust_brief}\n\n"
+        f"### Double-counting audit\n{dbl_brief}\n"
     )
     return base + (f"\n{extra}" if extra else "")
 

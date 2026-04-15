@@ -26,6 +26,8 @@ from connectors import fetch_all, AmazonAdsConnector, CriteoRetailMediaConnector
 from agent import (
     compute_kpis, detect_anomalies, neutrality_audit, product_detail,
     apply_filters, build_catalog,
+    trust_score, methodology_comparison, simulate_harmonization,
+    double_counting_audit,
     PERSONA_PROMPTS, ASK_SYSTEM_PROMPT, build_brief_payload,
 )
 
@@ -37,7 +39,7 @@ log = logging.getLogger("openrmn")
 
 ROOT_PATH = os.getenv("ROOT_PATH", "")
 PUBLIC_BASE = os.getenv("PUBLIC_BASE", "https://lab.holco.co/retail-audience")
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 CACHE_TTL_S = 300
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
@@ -482,6 +484,49 @@ def api_daily(
             for d in dates
         ]
     return {"dates": dates, "series": series}
+
+
+@app.get("/api/trust-score")
+def api_trust_score(
+    mode: str = Query("auto", pattern="^(auto|mock|real)$"),
+    products: Optional[str] = None,
+    campaigns: Optional[str] = None,
+    sources: Optional[str] = None,
+):
+    df = _wrap_real(lambda: get_df(mode=mode), mode)
+    df = apply_filters(df, _split_csv(products), _split_csv(campaigns), _split_csv(sources))
+    return trust_score(df)
+
+
+@app.get("/api/methodology-comparison")
+def api_methodology_comparison():
+    return methodology_comparison()
+
+
+@app.get("/api/harmonization-simulator")
+def api_harmonization_simulator(
+    window: int = Query(7, ge=1, le=90),
+    type: str = Query("last-click"),
+    mode: str = Query("auto", pattern="^(auto|mock|real)$"),
+    products: Optional[str] = None,
+    campaigns: Optional[str] = None,
+    sources: Optional[str] = None,
+):
+    df = _wrap_real(lambda: get_df(mode=mode), mode)
+    df = apply_filters(df, _split_csv(products), _split_csv(campaigns), _split_csv(sources))
+    return simulate_harmonization(df, target_window_days=window, target_type=type)
+
+
+@app.get("/api/double-counting")
+def api_double_counting(
+    mode: str = Query("auto", pattern="^(auto|mock|real)$"),
+    products: Optional[str] = None,
+    campaigns: Optional[str] = None,
+    sources: Optional[str] = None,
+):
+    df = _wrap_real(lambda: get_df(mode=mode), mode)
+    df = apply_filters(df, _split_csv(products), _split_csv(campaigns), _split_csv(sources))
+    return double_counting_audit(df)
 
 
 @app.post("/api/refresh")

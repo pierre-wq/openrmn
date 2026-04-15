@@ -254,6 +254,89 @@ button { font-family: inherit; cursor: pointer; }
 .share-bar > span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent); border-radius: 999px; }
 .audit-note { color: var(--text-tertiary); font-size: 12px; font-style: italic; margin-top: 12px; line-height: 1.5; }
 
+/* Trust Score */
+.section-sub { font-size: 13px; color: var(--text-secondary); margin: -14px 0 20px; }
+.section-sub a { color: var(--accent); text-decoration: underline; cursor: pointer; }
+.trust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.trust-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 24px; }
+.trust-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+.trust-rmn { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.trust-score-num { font-size: 12px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; text-align: right; margin-top: 2px; }
+.trust-grade { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 36px; line-height: 1; letter-spacing: -0.02em; }
+.grade-A, .grade-Ap { color: var(--accent); }
+.grade-B, .grade-Bp { color: var(--text-primary); }
+.grade-C, .grade-Cp { color: var(--text-tertiary); }
+.grade-D { color: #081a4d; }
+.trust-components { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 16px; }
+.trust-comp { display: grid; grid-template-columns: 1fr 44px; gap: 10px; align-items: center; font-size: 12px; color: var(--text-secondary); }
+.trust-comp-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trust-comp-bar { grid-column: 1 / 3; height: 5px; background: var(--bg-tertiary); border-radius: 999px; overflow: hidden; margin-top: 2px; }
+.trust-comp-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.trust-comp-score { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); font-weight: 500; }
+.trust-meth-link { background: transparent; border: 0; padding: 0; font-size: 12px; color: var(--accent); text-decoration: underline; cursor: pointer; }
+.trust-meth-link:hover { color: var(--accent-hover); }
+
+/* Methodology table + Simulator */
+.meth-table { width: 100%; border-collapse: collapse; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+.meth-table th, .meth-table td { padding: 12px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border); }
+.meth-table th { font-weight: 600; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; background: var(--bg-primary); }
+.meth-table td.c { text-align: center; }
+.meth-table tr:last-child td { border-bottom: 0; }
+.meth-yes { color: var(--accent); font-weight: 600; }
+.meth-no { color: var(--text-tertiary); }
+.meth-table a { color: var(--accent); text-decoration: underline; }
+.harmo-wrap { margin-top: 28px; padding: 22px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; }
+.harmo-title { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 18px; margin-bottom: 6px; }
+.harmo-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; }
+.harmo-controls { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+.harmo-field { display: flex; flex-direction: column; gap: 6px; }
+.harmo-field label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); font-weight: 600; }
+.harmo-field select { padding: 9px 12px; font-size: 13px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-card); color: var(--text-primary); font-family: inherit; min-width: 140px; }
+.harmo-btn { background: var(--accent); color: #fff; border: 0; padding: 10px 20px; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; }
+.harmo-btn:hover { background: var(--accent-hover); }
+.harmo-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 22px; }
+.harmo-col { border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; background: var(--bg-primary); }
+.harmo-col-head { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); font-weight: 600; margin-bottom: 10px; }
+.harmo-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 6px 0; font-size: 13px; border-bottom: 1px dashed var(--border-light); }
+.harmo-row:last-child { border-bottom: 0; }
+.harmo-row span.v { font-variant-numeric: tabular-nums; font-weight: 500; }
+.harmo-punchline { margin-top: 18px; padding: 14px 16px; background: var(--accent-light); border-left: 3px solid var(--accent); border-radius: 2px; font-weight: 600; font-size: 14px; color: var(--text-primary); line-height: 1.55; }
+
+/* Double-counting Sankey */
+.dc-wrap { margin-top: 28px; padding-top: 24px; border-top: 1px dashed var(--border); }
+.dc-title { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 18px; margin-bottom: 16px; }
+.dc-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-bottom: 22px; }
+.dc-kpi { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 16px 18px; }
+.dc-kpi .v { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 26px; letter-spacing: -0.01em; line-height: 1.1; }
+.dc-kpi .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); font-weight: 600; margin-top: 6px; }
+.dc-kpi .sub { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.dc-kpi.declared .v { color: var(--text-tertiary); }
+.dc-kpi.real .v { color: var(--accent); }
+.dc-kpi.overlap .v { color: var(--text-primary); }
+.dc-sankey { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 16px 20px; }
+.dc-sankey svg { width: 100%; height: 280px; display: block; }
+.dc-sankey .sk-label { font-size: 11px; fill: var(--text-secondary); font-family: inherit; }
+.dc-sankey .sk-label.strong { fill: var(--text-primary); font-weight: 600; }
+.dc-sankey .sk-val { font-size: 11px; fill: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.dc-sankey .sk-flow { fill: var(--accent); opacity: 0.22; }
+.dc-sankey .sk-flow.overlap { fill: var(--text-tertiary); opacity: 0.35; }
+.dc-sankey .sk-node { fill: var(--accent); }
+.dc-sankey .sk-node.overlap { fill: var(--text-tertiary); }
+.dc-sankey .sk-node.attr { fill: var(--text-primary); }
+.dc-note { font-size: 12px; color: var(--text-tertiary); font-style: italic; margin-top: 14px; line-height: 1.55; }
+
+/* Methodology modal */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(10,12,20,0.55); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-backdrop.show { display: flex; }
+.modal { background: var(--bg-card); border-radius: 6px; max-width: 720px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 28px 30px; }
+.modal h2 { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 20px; margin-bottom: 12px; }
+.modal .modal-close { float: right; background: transparent; border: 0; font-size: 20px; color: var(--text-tertiary); cursor: pointer; line-height: 1; margin-top: -4px; }
+.modal .modal-close:hover { color: var(--text-primary); }
+.modal .modal-section { margin-top: 18px; }
+.modal .modal-section h3 { font-size: 13px; font-weight: 600; margin-bottom: 4px; color: var(--text-primary); }
+.modal .modal-section p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px; }
+.modal .modal-section .formula { background: var(--bg-primary); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--text-primary); margin-top: 6px; }
+
 .sidebar h3 { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
 .online-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); display: inline-block; }
 .sidebar .sub { color: var(--text-tertiary); font-size: 12px; margin-bottom: 16px; }
@@ -391,7 +474,9 @@ button { font-family: inherit; cursor: pointer; }
 @media (max-width: 1024px) {
   .layout { grid-template-columns: 1fr; }
   .sidebar { position: static; }
-  .signals-grid, .rmn-grid { grid-template-columns: 1fr 1fr; }
+  .signals-grid, .rmn-grid, .trust-grid { grid-template-columns: 1fr 1fr; }
+  .dc-kpis { grid-template-columns: 1fr; }
+  .harmo-compare { grid-template-columns: 1fr; }
   .product-cards { grid-template-columns: 1fr 1fr; }
   .product-mini-cards { grid-template-columns: 1fr; }
 }
@@ -405,7 +490,7 @@ button { font-family: inherit; cursor: pointer; }
   .anim-wrap { padding: 32px 16px; }
   .layout { padding: 20px; }
   .hero-roas { font-size: 36px; }
-  .signals-grid, .rmn-grid { grid-template-columns: 1fr; }
+  .signals-grid, .rmn-grid, .trust-grid { grid-template-columns: 1fr; }
   .topbar-inner { padding: 12px 16px; }
   .sel-wrap { padding: 28px 16px; }
   .sel-grid { grid-template-columns: 1fr; gap: 12px; }
@@ -537,6 +622,11 @@ button { font-family: inherit; cursor: pointer; }
         <div class="hero-sub" id="hero-sub">Loading consolidated data…</div>
       </div>
       <div class="section">
+        <div class="section-label">Trust Score — fiabilité des régies</div>
+        <div class="section-sub">Méthodologie open source — <a id="trust-method-link">voir le calcul détaillé</a></div>
+        <div class="trust-grid" id="trust-grid"></div>
+      </div>
+      <div class="section">
         <div class="section-label">Weak signals detected <button class="info-q" type="button" data-tip="anomalies" aria-label="Explication">?</button></div>
         <div class="signals-grid" id="signals"></div>
       </div>
@@ -552,6 +642,41 @@ button { font-family: inherit; cursor: pointer; }
       <div class="section">
         <div class="section-label">Neutrality audit — common SKUs</div>
         <div id="audit-wrap"></div>
+        <div class="dc-wrap">
+          <div class="dc-title">Audit du double-comptage</div>
+          <div class="dc-kpis" id="dc-kpis"></div>
+          <div class="dc-sankey" id="dc-sankey"></div>
+          <div class="dc-note" id="dc-note"></div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-label">Méthodologies déclarées par les régies</div>
+        <div id="meth-wrap"></div>
+        <div class="harmo-wrap">
+          <div class="harmo-title">Simulateur d'harmonisation</div>
+          <div class="harmo-sub">Et si toutes les régies utilisaient la même méthodologie ?</div>
+          <div class="harmo-controls">
+            <div class="harmo-field">
+              <label for="harmo-window">Fenêtre cible</label>
+              <select id="harmo-window">
+                <option value="1">1 jour</option>
+                <option value="7" selected>7 jours</option>
+                <option value="14">14 jours</option>
+                <option value="30">30 jours</option>
+              </select>
+            </div>
+            <div class="harmo-field">
+              <label for="harmo-type">Type</label>
+              <select id="harmo-type">
+                <option value="last-click" selected>last-click</option>
+                <option value="assisted">assisted</option>
+                <option value="mixed">mixed</option>
+              </select>
+            </div>
+            <button class="harmo-btn" id="harmo-go" type="button">Simuler →</button>
+          </div>
+          <div id="harmo-result"></div>
+        </div>
       </div>
     </div>
 
@@ -572,9 +697,47 @@ button { font-family: inherit; cursor: pointer; }
         <button data-q="Why does Criteo ROAS diverge?">Why does Criteo ROAS diverge?</button>
         <button data-q="Reallocate my cross-network budget.">Reallocate my cross-network budget</button>
         <button data-q="Which incrementality tests should I run?">Which incrementality tests should I run?</button>
+        <button data-q="__dyn_trust__">Pourquoi le Trust Score de la régie la plus basse est-il faible ?</button>
+        <button data-q="__dyn_overlap__">Combien de ventes sur-attribuées sur le produit le plus concerné ?</button>
       </div>
       <div class="ai-output" id="ai-output"></div>
     </aside>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="meth-modal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <button class="modal-close" id="meth-modal-close" aria-label="Fermer">×</button>
+    <h2>Méthodologie Trust Score</h2>
+    <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
+      Le Trust Score agrège 4 composants sur une échelle 0–100, pondérés ci-dessous.
+      Chaque formule est implémentée dans <code>agent.py</code> (<code>trust_score()</code>)
+      — le code est public sur GitHub.
+    </p>
+    <div class="modal-section">
+      <h3>1. Internal consistency — poids 30 %</h3>
+      <p>Variance du ROAS quotidien sur la période. Plus la courbe de ROAS est stable jour après jour, plus la régie est crédible.</p>
+      <div class="formula">score = clamp(100 − CV(ROAS_daily) × 100, 0, 100)</div>
+    </div>
+    <div class="modal-section">
+      <h3>2. Cross-network convergence — poids 25 %</h3>
+      <p>Pour chaque SKU commun entre ≥ 2 régies, on mesure l'écart entre la part des ventes attribuées par la régie et la part équitable (1/N régies). Une régie qui attribue beaucoup plus que les autres a une convergence faible.</p>
+      <div class="formula">score = 100 × Σ (1 − |share_i − 1/N| / (1/N)) · total_i  /  Σ total_i</div>
+    </div>
+    <div class="modal-section">
+      <h3>3. Methodology transparency — poids 25 %</h3>
+      <p>Score statique basé sur l'information publiquement disponible : fenêtre d'attribution déclarée, type d'attribution documenté, certification MRC. Amazon = 90, Criteo = 70, Unlimitail = 60 (valeurs par défaut).</p>
+      <div class="formula">score = METHODOLOGY_TRANSPARENCY_SCORES[régie]</div>
+    </div>
+    <div class="modal-section">
+      <h3>4. Data freshness — poids 20 %</h3>
+      <p>Délai entre la date la plus récente dans les données et l'instant T. Sous 24 h : 100. Dégradation linéaire jusqu'à 0 au-delà de 7 jours.</p>
+      <div class="formula">score = 100 si age &lt; 1j ; 0 si age ≥ 7j ; sinon 100 × (1 − (age − 1) / 6)</div>
+    </div>
+    <div class="modal-section">
+      <h3>Score global et grade</h3>
+      <p>Somme pondérée des 4 composants. Grades : A+ (&gt;90), A (&gt;85), B+ (&gt;75), B (&gt;65), C+ (&gt;55), C (&gt;45), D (sinon).</p>
+    </div>
   </div>
 </div>
 
@@ -645,14 +808,17 @@ async function fetchJSON(url) {
 }
 
 async function loadAllData() {
-  const [kpis, anomalies, audit, raw, sources] = await Promise.all([
+  const [kpis, anomalies, audit, raw, sources, trust, meth, dc] = await Promise.all([
     fetchJSON("./api/kpis" + q()),
     fetchJSON("./api/anomalies" + q()),
     fetchJSON("./api/audit" + q()),
     fetchJSON("./api/raw" + q()),
     fetchJSON("./api/sources/status").catch(() => null),
+    fetchJSON("./api/trust-score" + q()).catch(() => ({})),
+    fetchJSON("./api/methodology-comparison").catch(() => ({})),
+    fetchJSON("./api/double-counting" + q()).catch(() => null),
   ]);
-  State.data = { kpis, anomalies, audit, raw, sources };
+  State.data = { ...State.data, kpis, anomalies, audit, raw, sources, trust, meth, dc };
   return State.data;
 }
 
@@ -756,18 +922,6 @@ async function onSetupGo() {
   State.selectedCampaigns = [];
   State.selectedProduct = null;
   await goAct3();
-}
-
-async function loadAllData() {
-  const [kpis, anomalies, audit, raw, sources] = await Promise.all([
-    fetchJSON("./api/kpis" + q()),
-    fetchJSON("./api/anomalies" + q()),
-    fetchJSON("./api/audit" + q()),
-    fetchJSON("./api/raw" + q()),
-    fetchJSON("./api/sources/status").catch(() => null),
-  ]);
-  State.data = { ...State.data, kpis, anomalies, audit, raw, sources };
-  return State.data;
 }
 
 const SPINNER_FRAMES = ["◐", "◓", "◑", "◒"];
@@ -967,6 +1121,9 @@ function renderDashboard() {
   }
 
   renderAudit(audit);
+  renderTrustScore(State.data.trust || {});
+  renderDoubleCounting(State.data.dc);
+  renderMethodology(State.data.meth || {});
   renderProductCards();
   // re-render an open detail to refresh data after mode switch
   if (State.selectedProduct) {
@@ -1034,6 +1191,256 @@ function renderAudit(audit) {
       → This is precisely the comparability problem openRMN solves, by normalizing and confronting the declarations of each network.
     </div>
   `;
+}
+
+/* Trust Score rendering */
+const TRUST_RMN_LABEL = { amazon: "Amazon Ads", criteo: "Criteo Retail Media", unlimitail: "Unlimitail" };
+const TRUST_COMP_LABELS = {
+  internal_consistency: "Cohérence interne",
+  cross_network_convergence: "Convergence cross-régie",
+  methodology_transparency: "Transparence méthodo",
+  data_freshness: "Fraîcheur des données",
+};
+function gradeClass(grade) {
+  if (!grade) return "grade-D";
+  if (grade === "A+") return "grade-Ap";
+  if (grade === "A") return "grade-A";
+  if (grade === "B+") return "grade-Bp";
+  if (grade === "B") return "grade-B";
+  if (grade === "C+") return "grade-Cp";
+  if (grade === "C") return "grade-C";
+  return "grade-D";
+}
+function renderTrustScore(trust) {
+  const grid = document.getElementById("trust-grid");
+  if (!grid) return;
+  const slugs = ["amazon", "criteo", "unlimitail"].filter(s => trust[s]);
+  if (!slugs.length) {
+    grid.innerHTML = '<div class="signals-empty">Aucune donnée pour calculer le Trust Score.</div>';
+    return;
+  }
+  grid.innerHTML = slugs.map(slug => {
+    const t = trust[slug];
+    const comps = t.components || {};
+    const compHtml = Object.entries(comps).map(([k, c]) => `
+      <div class="trust-comp">
+        <div class="trust-comp-label" title="${escapeAttr(c.explanation)}">${TRUST_COMP_LABELS[k] || k} <span style="color:var(--text-tertiary);font-size:10px;">· ${c.weight}%</span></div>
+        <div class="trust-comp-score">${c.score}</div>
+        <div class="trust-comp-bar"><span style="width:${Math.max(0, Math.min(100, c.score))}%"></span></div>
+      </div>
+    `).join("");
+    const findings = (t.key_findings || []).map(f => `<li>${f}</li>`).join("");
+    return `<div class="trust-card">
+      <div class="trust-head">
+        <div>
+          <div class="trust-rmn">${t.rmn_label || TRUST_RMN_LABEL[slug] || slug}</div>
+          <div class="trust-score-num">${t.score}/100</div>
+        </div>
+        <div class="trust-grade ${gradeClass(t.grade)}">${t.grade}</div>
+      </div>
+      <div class="trust-components">${compHtml}</div>
+      <ul style="margin:0 0 14px 18px;font-size:12px;color:var(--text-secondary);line-height:1.55;">${findings}</ul>
+      <button class="trust-meth-link" data-meth-open="${slug}">Voir la méthodologie →</button>
+    </div>`;
+  }).join("");
+  grid.querySelectorAll("[data-meth-open]").forEach(b => {
+    b.addEventListener("click", () => openMethModal());
+  });
+}
+
+/* Double-counting rendering */
+function renderDoubleCounting(dc) {
+  const kpis = document.getElementById("dc-kpis");
+  const sank = document.getElementById("dc-sankey");
+  const note = document.getElementById("dc-note");
+  if (!kpis || !sank) return;
+  if (!dc || !dc.total_attributed) {
+    kpis.innerHTML = '<div class="signals-empty">Aucune donnée cross-régie pour l\'audit de double-comptage.</div>';
+    sank.innerHTML = "";
+    note.textContent = "";
+    return;
+  }
+  kpis.innerHTML = `
+    <div class="dc-kpi declared"><div class="v">${fmtEur(dc.total_attributed)}</div><div class="l">Ventes auto-déclarées</div></div>
+    <div class="dc-kpi real"><div class="v">${fmtEur(dc.estimated_real)}</div><div class="l">Ventes réelles estimées</div></div>
+    <div class="dc-kpi overlap"><div class="v">${fmtEur(dc.overlap_amount)}</div><div class="l">Sur-attribution</div><div class="sub">= ${fmtNum(dc.overlap_pct)}% du total déclaré</div></div>
+  `;
+  sank.innerHTML = renderSankey(dc);
+  note.textContent = dc.note || "";
+}
+
+function renderSankey(dc) {
+  const W = 800, H = 280;
+  const pad = 16, colW = 140, nodeW = 14;
+  const leftX = pad, rightX = W - pad - nodeW;
+  const innerLeftX = leftX + nodeW;
+  const innerRightX = rightX;
+  const total = dc.total_attributed || 0;
+  if (!total) return "";
+  const usableH = H - 2 * pad;
+  const gap = 8;
+
+  const nets = dc.per_network || [];
+  const leftN = nets.length;
+  const leftGapTotal = gap * (leftN - 1);
+  const leftScale = (usableH - leftGapTotal) / total;
+
+  // Right nodes: Real and Overlap
+  const rightNodes = [
+    { label: "Ventes réelles", value: dc.estimated_real, kind: "real" },
+    { label: "Sur-attribution", value: dc.overlap_amount, kind: "overlap" },
+  ].filter(n => n.value > 0);
+  const rightTotal = rightNodes.reduce((s, n) => s + n.value, 0);
+  const rightGapTotal = gap * (rightNodes.length - 1);
+  const rightScale = (usableH - rightGapTotal) / rightTotal;
+
+  // Compute left node positions + track consumed heights per node
+  let ly = pad;
+  const left = nets.map(n => {
+    const h = n.attributed * leftScale;
+    const y = ly; ly += h + gap;
+    return { ...n, x: leftX, y, h, consumed: 0 };
+  });
+  let ry = pad;
+  const right = rightNodes.map(n => {
+    const h = n.value * rightScale;
+    const y = ry; ry += h + gap;
+    return { ...n, x: rightX, y, h, consumed: 0 };
+  });
+
+  // Flows (each left -> each right)
+  const flowSvgs = [];
+  for (const l of left) {
+    for (const r of right) {
+      const flowVal = r.kind === "real" ? l.real : l.overlap;
+      if (!flowVal || flowVal <= 0) continue;
+      const h1 = flowVal * leftScale;
+      const h2 = flowVal * rightScale;
+      const y1a = l.y + l.consumed;
+      const y1b = y1a + h1;
+      const y2a = r.y + r.consumed;
+      const y2b = y2a + h2;
+      l.consumed += h1;
+      r.consumed += h2;
+      const x1 = innerLeftX, x2 = innerRightX;
+      const cx1 = x1 + (x2 - x1) * 0.5;
+      const cx2 = cx1;
+      const path = `M ${x1} ${y1a} C ${cx1} ${y1a} ${cx2} ${y2a} ${x2} ${y2a} L ${x2} ${y2b} C ${cx2} ${y2b} ${cx1} ${y1b} ${x1} ${y1b} Z`;
+      flowSvgs.push(`<path class="sk-flow ${r.kind === "overlap" ? "overlap" : ""}" d="${path}"/>`);
+    }
+  }
+
+  const leftLabels = left.map(l => `
+    <rect class="sk-node attr" x="${l.x}" y="${l.y}" width="${nodeW}" height="${l.h}"/>
+    <text class="sk-label strong" x="${l.x + nodeW + 6}" y="${l.y + 12}">${l.rmn}</text>
+    <text class="sk-val" x="${l.x + nodeW + 6}" y="${l.y + 26}">${fmtEur(l.attributed)}</text>
+  `).join("");
+
+  const rightLabels = right.map(r => `
+    <rect class="sk-node ${r.kind}" x="${r.x}" y="${r.y}" width="${nodeW}" height="${r.h}"/>
+    <text class="sk-label strong" x="${r.x - 6}" y="${r.y + 12}" text-anchor="end">${r.label}</text>
+    <text class="sk-val" x="${r.x - 6}" y="${r.y + 26}" text-anchor="end">${fmtEur(r.value)}</text>
+  `).join("");
+
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+    ${flowSvgs.join("")}
+    ${leftLabels}
+    ${rightLabels}
+  </svg>`;
+}
+
+/* Methodology table */
+function renderMethodology(meth) {
+  const wrap = document.getElementById("meth-wrap");
+  if (!wrap) return;
+  const slugs = ["amazon", "criteo", "unlimitail"].filter(s => meth[s]);
+  if (!slugs.length) {
+    wrap.innerHTML = '<div class="signals-empty">Méthodologies non disponibles.</div>';
+    return;
+  }
+  const rows = slugs.map(s => {
+    const m = meth[s];
+    const label = TRUST_RMN_LABEL[s] || s;
+    const vt = m.includes_view_through ? '<span class="meth-yes">✓</span>' : '<span class="meth-no">—</span>';
+    const off = m.includes_offline_sales ? '<span class="meth-yes">✓</span>' : '<span class="meth-no">—</span>';
+    const mrc = m.mrc_certified ? '<span class="meth-yes">✓</span>' : '<span class="meth-no">—</span>';
+    const doc = m.documentation_url
+      ? `<a href="${m.documentation_url}" target="_blank" rel="noopener">↗</a>`
+      : '<span class="meth-no" style="font-style:italic;">non publiée</span>';
+    return `<tr>
+      <td><strong>${label}</strong></td>
+      <td>${m.attribution_window_days} jours</td>
+      <td>${m.attribution_type}</td>
+      <td class="c">${vt}</td>
+      <td class="c">${off}</td>
+      <td class="c">${mrc}</td>
+      <td class="c">${doc}</td>
+    </tr>`;
+  }).join("");
+  wrap.innerHTML = `<table class="meth-table">
+    <thead><tr>
+      <th>Régie</th><th>Fenêtre attrib.</th><th>Type</th>
+      <th class="c">View-through</th><th class="c">Offline</th><th class="c">MRC</th><th class="c">Doc</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+/* Harmonization simulator */
+async function runHarmonization() {
+  const btn = document.getElementById("harmo-go");
+  const out = document.getElementById("harmo-result");
+  const w = document.getElementById("harmo-window").value;
+  const t = document.getElementById("harmo-type").value;
+  btn.disabled = true;
+  out.innerHTML = '<div style="margin-top:18px;color:var(--text-tertiary);font-size:13px;">Calcul en cours…</div>';
+  try {
+    const extra = `window=${encodeURIComponent(w)}&type=${encodeURIComponent(t)}`;
+    const data = await fetchJSON("./api/harmonization-simulator" + q(extra));
+    out.innerHTML = renderHarmonizationResult(data);
+  } catch (e) {
+    out.innerHTML = `<div style="margin-top:18px;color:var(--text-primary);font-size:13px;">Erreur : ${e.message}</div>`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+function renderHarmonizationResult(data) {
+  const delta = data.delta_per_network || {};
+  const slugs = ["amazon", "criteo", "unlimitail"].filter(s => delta[s]);
+  if (!slugs.length) return '<div style="margin-top:18px;color:var(--text-tertiary);font-size:13px;">Aucune donnée à harmoniser.</div>';
+  const leftRows = slugs.map(s => `
+    <div class="harmo-row"><span>${delta[s].rmn_label}</span><span class="v">${fmtNum(delta[s].roas_before)}x</span></div>
+  `).join("");
+  const rightRows = slugs.map(s => {
+    const dp = delta[s].delta_pct;
+    const sign = dp > 0 ? `+${fmtNum(dp)}%` : dp < 0 ? `${fmtNum(dp)}%` : "0%";
+    return `<div class="harmo-row"><span>${delta[s].rmn_label}</span><span class="v">${fmtNum(delta[s].roas_after)}x <span style="color:var(--text-tertiary);font-size:11px;">(${sign})</span></span></div>`;
+  }).join("");
+  const punch = `En harmonisant les fenêtres d'attribution à ${data.target_window_days} jours, l'écart entre la régie la plus et la moins performante passe de ${fmtNum(data.roas_spread_before_pct)}% à ${fmtNum(data.roas_spread_after_pct)}%.`;
+  return `
+    <div class="harmo-compare">
+      <div class="harmo-col">
+        <div class="harmo-col-head">Données déclarées</div>
+        ${leftRows}
+      </div>
+      <div class="harmo-col">
+        <div class="harmo-col-head">Données harmonisées</div>
+        ${rightRows}
+      </div>
+    </div>
+    <div class="harmo-punchline">${punch}</div>
+    <div style="font-size:11px;color:var(--text-tertiary);margin-top:10px;font-style:italic;">${data.assumptions || ""}</div>
+  `;
+}
+
+/* Modal methodology */
+function openMethModal() {
+  const m = document.getElementById("meth-modal");
+  if (m) m.classList.add("show");
+}
+function closeMethModal() {
+  const m = document.getElementById("meth-modal");
+  if (m) m.classList.remove("show");
 }
 
 /* Logo "home" → setup */
@@ -1335,9 +1742,34 @@ document.getElementById("ask-form").addEventListener("submit", e => {
 
 document.querySelectorAll("#ask-suggestions button").forEach(b => {
   b.addEventListener("click", () => {
-    document.getElementById("ask-input").value = b.dataset.q;
-    submitQuestion(b.dataset.q);
+    let q = b.dataset.q;
+    if (q === "__dyn_trust__") {
+      const trust = State.data.trust || {};
+      const slugs = Object.keys(trust);
+      if (!slugs.length) return;
+      const worst = slugs.reduce((a, c) => (trust[c].score < trust[a].score ? c : a), slugs[0]);
+      const label = trust[worst].rmn_label || worst;
+      q = `Pourquoi le Trust Score de ${label} (${trust[worst].score}/100, grade ${trust[worst].grade}) est-il faible ? Détaille les composants les plus pénalisants.`;
+    } else if (q === "__dyn_overlap__") {
+      const dc = State.data.dc || {};
+      const top = (dc.per_product || [])[0];
+      if (!top) return;
+      q = `Combien de ventes sur-attribuées sur « ${top.product} » ? Chiffre l'overlap et ventile par régie.`;
+    }
+    document.getElementById("ask-input").value = q;
+    submitQuestion(q);
   });
+});
+
+/* Harmonization + Methodology modal wires */
+document.getElementById("harmo-go")?.addEventListener("click", runHarmonization);
+document.getElementById("trust-method-link")?.addEventListener("click", openMethModal);
+document.getElementById("meth-modal-close")?.addEventListener("click", closeMethModal);
+document.getElementById("meth-modal")?.addEventListener("click", e => {
+  if (e.target.id === "meth-modal") closeMethModal();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeMethModal();
 });
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
