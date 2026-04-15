@@ -85,7 +85,7 @@ button { font-family: inherit; cursor: pointer; }
 .act1-conn .ready .btn-primary { width: 100%; padding: 14px 28px; }
 
 #act2 { background: var(--bg-primary); min-height: 100vh; padding-bottom: 40px; }
-#act2{ display: none; }
+#act3 { display: none; }
 #act3.show { display: block; }
 
 /* Act 2 — selection screen */
@@ -968,7 +968,7 @@ function renderSelection() {
   document.getElementById("sel-camp-list").innerHTML = campHtml || '<div style="color:var(--text-tertiary);font-size:13px">No campaign available.</div>';
 
   // wire item clicks
-  document.querySelectorAll("#act2.sel-item").forEach(item => {
+  document.querySelectorAll("#act2 .sel-item").forEach(item => {
     item.addEventListener("click", () => {
       const kind = item.dataset.kind;
       const id = item.dataset.id;
@@ -980,7 +980,7 @@ function renderSelection() {
     });
   });
   // toggles
-  document.querySelectorAll("#act2.sel-toggle-row button").forEach(btn => {
+  document.querySelectorAll("#act2 .sel-toggle-row button").forEach(btn => {
     btn.addEventListener("click", () => {
       const target = btn.dataset.target;
       const action = btn.dataset.action;
