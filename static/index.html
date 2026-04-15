@@ -47,20 +47,6 @@ button { font-family: inherit; cursor: pointer; }
 .act.hidden { display: none !important; }
 .act.fading { opacity: 0; }
 
-#act0 { max-width: 420px; margin: 0 auto; padding: 48px 24px; min-height: 100vh; display: flex; flex-direction: column; }
-#act0 .gate { margin-top: 80px; }
-.gate-title { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 28px; letter-spacing: -0.01em; margin-top: 60px; }
-.gate-sub { color: var(--text-secondary); font-size: 14px; line-height: 1.65; margin-top: 12px; }
-.gate-form { display: flex; gap: 8px; margin-top: 28px; }
-.gate-form input {
-  flex: 1; padding: 12px 14px; font-size: 14px; border: 1px solid var(--border);
-  border-radius: 4px; background: var(--bg-card); color: var(--text-primary);
-  font-family: inherit;
-}
-.gate-form input:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
-.gate-form button { padding: 12px 20px; font-size: 14px; }
-.gate-error { color: var(--text-primary); font-size: 13px; margin-top: 14px; min-height: 18px; }
-
 #act1 { max-width: 640px; margin: 0 auto; padding: 48px 24px; min-height: 100vh; display: flex; flex-direction: column; }
 #act1 .logo { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 18px; color: var(--text-primary); }
 #act1 h1 { font-family: "Source Serif 4", serif; font-weight: 500; font-size: 48px; line-height: 1.15; letter-spacing: -0.01em; margin-top: 80px; }
@@ -383,21 +369,7 @@ button { font-family: inherit; cursor: pointer; }
 </head>
 <body>
 
-<div id="act0" class="act">
-  <div class="gate">
-    <div class="logo">openRMN</div>
-    <h2 class="gate-title">Restricted access</h2>
-    <p class="gate-sub">This lab is reserved for invited reviewers. Please enter the access password to continue.</p>
-    <form id="gate-form" class="gate-form" autocomplete="off">
-      <input type="password" id="gate-input" placeholder="Access password" autofocus>
-      <button class="btn-primary" type="submit">Enter →</button>
-    </form>
-    <div id="gate-error" class="gate-error"></div>
-  </div>
-  <div class="footer">v0.2 — open source · MIT</div>
-</div>
-
-<div id="act1" class="act hidden">
+<div id="act1" class="act">
   <div class="logo">openRMN</div>
   <h1>The independent retail media analytics layer</h1>
   <p class="lede">Your retail media campaigns are scattered across Amazon, Criteo, Unlimitail and 5 other networks. Each walled garden has its own schema, its own metrics, its own truth. openRMN unifies, normalizes and reveals what each one hides.</p>
@@ -541,8 +513,6 @@ Unlimitail API ─┘    (mock+real)    (pandas DF)        KPI · Anomalies · A
 </div>
 
 <script>
-const ACCESS_PASSWORD = "holco3096";
-
 const State = {
   act: 0,
   mode: "mock",
@@ -602,24 +572,7 @@ async function loadAllData() {
   return State.data;
 }
 
-function startAct0() {
-  const form = document.getElementById("gate-form");
-  const input = document.getElementById("gate-input");
-  const err = document.getElementById("gate-error");
-  form.addEventListener("submit", async e => {
-    e.preventDefault();
-    err.textContent = "";
-    if (input.value.trim().toLowerCase() === ACCESS_PASSWORD) {
-      const a0 = document.getElementById("act0");
-      a0.classList.add("fading");
-      await sleep(220);
-      a0.classList.add("hidden");
-      document.getElementById("act1").classList.remove("hidden");
-    } else {
-      err.textContent = "Incorrect password.";
-      input.select();
-    }
-  });
+function startApp() {
   document.getElementById("btn-start").addEventListener("click", goAct2);
   document.getElementById("btn-archi").addEventListener("click", () => {
     document.getElementById("archi-block").classList.toggle("open");
@@ -1438,7 +1391,7 @@ function updateSuggestionsForProduct(product) {
 }
 
 setupIntroBanner();
-startAct0();
+startApp();
 </script>
 </body>
 </html>

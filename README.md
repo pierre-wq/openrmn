@@ -1,116 +1,160 @@
 # openRMN
 
-**Open source MVP — Retail Media Analytics augmentée par IA.**
+> The independent retail media analytics layer.
+> Connects to Amazon Ads, Criteo and Unlimitail APIs, normalizes data,
+> and uses AI to reveal what each walled garden hides.
 
-openRMN agrège les données publicitaires de plusieurs régies retail media
-(Amazon Ads, Criteo Retail Media, etc.) dans un schéma unifié, puis laisse un
-agent IA (Claude Sonnet 4.5) produire des insights actionnables en français
-pour les annonceurs.
+🔗 Live demo : https://lab.holco.co/retail-audience
 
-## Pourquoi
+## Why openRMN ?
 
-Les annonceurs multi-régies perdent un temps fou à :
-- consolider manuellement des exports hétérogènes (taxonomies, définitions de
-  conversion, fenêtres d'attribution incompatibles),
-- arbitrer les biais d'auto-attribution des régies (walled gardens),
-- traduire des KPI bruts en décisions business.
+Retail media budgets are fragmenting across an ever-growing list of walled
+gardens — Amazon Ads, Criteo Retail Media, Unlimitail, Walmart Connect,
+Carrefour Links and more. Each network reports its own metrics, attributes
+sales with its own methodology, and double-counts conversions its peers also
+claim. Advertisers end up with contradictory dashboards and no neutral
+arbitrator to reconcile them. In Skai's 2026 state-of-retail-media survey,
+**75% of advertisers cite incrementality measurement as their #1 challenge**.
+openRMN is the third-party layer that consolidates, normalizes and audits
+those self-reported figures so the buyer — not the seller — owns the truth.
 
-openRMN propose une couche déterministe (schéma unifié + KPI + détection
-d'anomalies + audit de neutralité) **augmentée** par un agent IA qui raisonne
-sur ces artefacts et produit un brief exécutif en 3 sections.
+## Features (v0.2)
 
-## Quickstart
-
-```bash
-pip install pandas anthropic
-export ANTHROPIC_API_KEY=sk-ant-...
-python agent.py
-```
-
-Sans variables d'env `AMZ_PROFILE_ID` / `CRITEO_API_KEY`, les connecteurs
-tournent en **mode mock** avec des données simulées réalistes (4 SKU café,
-3 campagnes, 14 jours, 3 retailers Criteo).
-
-Tests isolés :
-
-```bash
-python connectors.py   # vérifie l'ingestion mock
-python agent.py        # pipeline complet (brief IA si ANTHROPIC_API_KEY)
-```
+- Multi-RMN connectors : Amazon Ads (real + mock), Criteo Retail Media (mock), Unlimitail (mock)
+- Unified schema (`UnifiedRow`) cross-RMN
+- Deterministic analytics layer : KPIs, anomaly detection, neutrality audit
+- AI agent (Claude Sonnet 4.5) with 3 personas : Executive / Operational / Auditor
+- Free-form Q&A on your data
+- Web dashboard : narrative 4-act experience, Mock/Real toggle, OAuth Amazon
+- Per-product drill-down with cross-network attribution comparison
 
 ## Architecture
 
 ```
- ┌──────────────────┐    ┌──────────────────┐
- │  Amazon Ads API  │    │  Criteo RM API   │   ← stubs `_fetch_real()`
- └────────┬─────────┘    └────────┬─────────┘
-          │ (mock par défaut)      │
-          ▼                        ▼
- ┌──────────────────────────────────────────┐
- │  Connecteurs → UnifiedRow (dataclass)    │
- │  date • rmn • retailer • campaign • sku  │
- │  impressions • clicks • spend • sales …  │
- └─────────────────────┬────────────────────┘
-                       │ pandas.DataFrame
-                       ▼
- ┌──────────────────────────────────────────┐
- │  Couche déterministe (agent.py)          │
- │   • compute_kpis()                       │
- │   • detect_anomalies()                   │
- │   • neutrality_audit()                   │
- └─────────────────────┬────────────────────┘
-                       │ KPI + anomalies + audit
-                       ▼
- ┌──────────────────────────────────────────┐
- │  Agent IA — Claude Sonnet 4.5            │
- │   system: analyste senior retail media   │
- │   output: brief exécutif FR              │
- │     1. Diagnostic                        │
- │     2. Anomalies & risques               │
- │     3. Recommandations                   │
- └──────────────────────────────────────────┘
+ ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+ │  Amazon Ads API  │    │  Criteo RM API   │    │   Unlimitail     │
+ └────────┬─────────┘    └────────┬─────────┘    └────────┬─────────┘
+          │ (real + mock)         │ (mock)                │ (mock)
+          ▼                       ▼                       ▼
+ ┌─────────────────────────────────────────────────────────────────┐
+ │  Connectors → UnifiedRow (dataclass)                            │
+ │  date • rmn • retailer • campaign • sku • product_name          │
+ │  impressions • clicks • spend_eur • units_sold • sales_eur • …  │
+ └───────────────────────────────┬─────────────────────────────────┘
+                                 │ pandas.DataFrame
+                                 ▼
+ ┌─────────────────────────────────────────────────────────────────┐
+ │  Deterministic layer (agent.py)                                 │
+ │   • compute_kpis()        • detect_anomalies()                  │
+ │   • neutrality_audit()    • product_detail()                    │
+ └───────────────────────────────┬─────────────────────────────────┘
+                                 │ KPI + anomalies + audit
+                                 ▼
+ ┌─────────────────────────────────────────────────────────────────┐
+ │  AI agent — Claude Sonnet 4.5 (SSE-streamed)                    │
+ │   personas: executive · operational · neutrality                │
+ │   free-form Q&A on the grounded data                            │
+ └───────────────────────────────┬─────────────────────────────────┘
+                                 │
+                                 ▼
+ ┌─────────────────────────────────────────────────────────────────┐
+ │  FastAPI (api.py) + static dashboard (4-act narrative UI)       │
+ └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Schéma unifié `UnifiedRow`
+## Quickstart
 
-| Champ                 | Type    | Description                          |
-|-----------------------|---------|--------------------------------------|
-| `date`                | date    | Jour de mesure                       |
-| `rmn`                 | str     | Régie (Amazon Ads, Criteo RM, …)     |
-| `retailer`            | str     | Enseigne (Amazon.fr, Cdiscount, …)   |
-| `campaign_id`         | str     | ID natif régie                       |
-| `campaign_name`       | str     | Nom de campagne (normalisé côté MVP) |
-| `sku`                 | str     | Référence produit                    |
-| `product_name`        | str     | Nom produit (clé de jointure cross-régie) |
-| `impressions`         | int     |                                      |
-| `clicks`              | int     |                                      |
-| `spend_eur`           | float   |                                      |
-| `units_sold`          | int     |                                      |
-| `sales_eur`           | float   |                                      |
-| `new_to_brand_units`  | int     | Unités vendues à nouveaux acheteurs  |
+### Local dev with mock data
 
-## Anomalies détectées
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export ANTHROPIC_API_KEY=sk-ant-...
+uvicorn api:app --reload
+# Open http://localhost:8000
+```
 
-- **Cannibalisation potentielle** : même produit, ROAS très divergent entre
-  Amazon et Criteo (ratio > 1.8 ou < 0.55).
-- **Campagnes sous-performantes** : ROAS < 1.5 sur > 5 000 EUR de spend.
+### Production (behind reverse proxy)
 
-## Audit de neutralité
+```bash
+ROOT_PATH=/retail-audience uvicorn api:app --host 127.0.0.1 --port 8000
+```
 
-Comparaison des ventes attribuées par chaque régie sur les SKU communs.
-Une part Amazon > 70% sur les ventes agrégées est un signal fort de
-sur-attribution côté walled garden.
+### Connecting your real Amazon Ads account
+
+1. Get LWA credentials from https://developer.amazon.com/loginwithamazon
+2. Add to `.env` :
+   ```
+   AMZ_LWA_CLIENT_ID=...
+   AMZ_LWA_CLIENT_SECRET=...
+   ```
+3. Whitelist the redirect URI in your LWA security profile :
+   `https://your-domain.com/api/amazon/oauth/callback`
+4. Visit `/api/amazon/oauth/start` in your browser → authorize → done.
+   The refresh token and EU profile ID are persisted to `.env`.
+
+## API endpoints
+
+All endpoints accept a `mode` query param : `auto` (default) · `mock` · `real`.
+Most also accept optional `products=a,b,c` and `campaigns=id1,id2` filters.
+
+```bash
+# Health
+curl https://lab.holco.co/retail-audience/api/health
+
+# Consolidated KPIs (ROAS unifié, spend, sales, breakdown par régie)
+curl "https://lab.holco.co/retail-audience/api/kpis?mode=mock"
+
+# Anomalies détectées automatiquement
+curl "https://lab.holco.co/retail-audience/api/anomalies?mode=mock"
+
+# Audit de neutralité (parts d'attribution par régie sur SKU communs)
+curl "https://lab.holco.co/retail-audience/api/audit?mode=mock"
+
+# Catalogue (produits + campagnes pour la sélection)
+curl "https://lab.holco.co/retail-audience/api/catalog?mode=mock"
+
+# Drill-down par produit
+curl "https://lab.holco.co/retail-audience/api/product-detail?product=Capsules%20Origine%20Colombie&mode=mock"
+
+# Raw UnifiedRows (14 jours par défaut, cap 90)
+curl "https://lab.holco.co/retail-audience/api/raw?mode=mock&days=14"
+
+# Série journalière ROAS par régie
+curl "https://lab.holco.co/retail-audience/api/daily?mode=mock"
+
+# État des connecteurs (mode_available par RMN)
+curl "https://lab.holco.co/retail-audience/api/sources/status"
+
+# Invalider le cache (force refetch)
+curl -X POST "https://lab.holco.co/retail-audience/api/refresh?mode=real"
+
+# Brief IA streamé (SSE, persona ∈ {executive, operational, neutrality})
+curl -N -X POST "https://lab.holco.co/retail-audience/api/brief?persona=executive&mode=mock"
+
+# Q&A libre streamé (SSE)
+curl -N -X POST https://lab.holco.co/retail-audience/api/ask \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"Pourquoi Criteo sur-attribue sur les capsules ?","mode":"mock"}'
+```
 
 ## Roadmap
 
-- [ ] Connecteurs réels (OAuth Amazon Ads v3, Criteo Retail Media API)
-- [ ] Normaliseur de taxonomies campagne (naming SP/SB/SD vs Criteo)
-- [ ] Modèle d'attribution neutre (last-click cross-régie, halo offline)
-- [ ] Dashboard Streamlit (KPI + conversational agent)
-- [ ] Détection de saturation enchère (spend plateau vs sales plateau)
-- [ ] Alertes programmées (cron + Slack)
-- [ ] Ajout Walmart Connect, Carrefour Links, Leclerc Média
+- [ ] Real Criteo Retail Media connector (OAuth client_credentials)
+- [ ] Real Unlimitail connector
+- [ ] Walmart Connect, Carrefour Links, Mirakl Ads, Leclerc Média
+- [ ] Geo-holdout incrementality testing
+- [ ] Third-party panel data integration (e.g. Wakoopa) for neutrality audit
+- [ ] Streamlit / Next.js production-grade UI
+- [ ] Self-hosted deployment via Docker Compose
 
-## Licence
+## License
 
-MIT.
+MIT — contributions welcome.
+
+## Contributing
+
+Fork the repo, open a pull request against `main`, and describe your change.
+Bug reports and feature requests go in GitHub Issues. By contributing you agree
+to keep discussions professional and constructive.

@@ -86,7 +86,7 @@ def detect_anomalies(df: pd.DataFrame) -> List[Dict[str, Any]]:
                     "ratio": round(ratio, 2),
                     "severity": "high" if (ratio > 2.5 or ratio < 0.4) else "medium",
                     "message": (
-                        f"Significant ROAS gap on \"{product}\": "
+                        f"Écart de ROAS significatif sur « {product} » : "
                         f"{a} {float(ra):.2f} vs {b} {float(rb):.2f} (x{ratio:.2f})."
                     ),
                 })
@@ -108,8 +108,8 @@ def detect_anomalies(df: pd.DataFrame) -> List[Dict[str, Any]]:
                 "roas": round(float(r["roas"]), 2),
                 "severity": "high" if float(r["roas"]) < 1.0 else "medium",
                 "message": (
-                    f"Campaign \"{r['campaign_name']}\" ({r['rmn']}): "
-                    f"ROAS {float(r['roas']):.2f} on {float(r['spend_eur']):,.0f} EUR invested."
+                    f"Campagne « {r['campaign_name']} » ({r['rmn']}) : "
+                    f"ROAS {float(r['roas']):.2f} sur {float(r['spend_eur']):,.0f} EUR investis."
                 ),
             })
 
@@ -197,7 +197,7 @@ def product_detail(df: pd.DataFrame, product: str) -> Dict[str, Any]:
     target = product.strip().lower()
     sub = df[df["product_name"].astype(str).str.strip().str.lower() == target]
     if sub.empty:
-        return {**empty, "error": "Product not found for the current period."}
+        return {**empty, "error": "Produit introuvable sur la période courante."}
 
     by_rmn: List[Dict[str, Any]] = []
     for rmn, g in sub.groupby("rmn"):
@@ -243,9 +243,9 @@ def product_detail(df: pd.DataFrame, product: str) -> Dict[str, Any]:
     over_ratio = round(total_attr / est_mid, 2) if est_mid else 0.0
     over_pct = int(round((over_ratio - 1) * 100)) if over_ratio > 1 else 0
     note = (
-        f"The networks collectively self-attribute {over_pct}% more than the "
-        f"estimated real sales for this product." if over_pct > 0 else
-        "No over-attribution detected on this product."
+        f"Les régies s'auto-attribuent collectivement {over_pct}% de plus que les "
+        f"ventes réelles estimées pour ce produit." if over_pct > 0 else
+        "Aucune sur-attribution détectée sur ce produit."
     )
 
     return {
@@ -264,7 +264,7 @@ def neutrality_audit(df: pd.DataFrame) -> Dict[str, Any]:
     if df.empty:
         return {"per_product": [], "shares_avg_pct": {}, "rmns": [],
                 "avg_amazon_share_pct": None,
-                "comment": "No data available for the audit."}
+                "comment": "Aucune donnée disponible pour l'audit."}
     by_prod_rmn = (
         df.groupby(["product_name", "rmn"])[["sales_eur", "units_sold"]]
         .sum()
@@ -307,63 +307,74 @@ def neutrality_audit(df: pd.DataFrame) -> Dict[str, Any]:
             next((r for r in rmns if "Amazon" in r), ""), None
         ),
         "comment": (
-            "Share of sales each network self-attributes on common SKUs. "
-            "The sum of shares exceeds 100% of real revenue: cumulated "
-            "over-attribution measures the walled-garden bias."
+            "Part des ventes que chaque régie s'auto-attribue sur les SKU communs. "
+            "La somme des parts dépasse 100% du chiffre d'affaires réel : "
+            "la sur-attribution cumulée mesure le biais walled-garden."
         ),
     }
 
 
 PERSONA_PROMPTS: Dict[str, str] = {
-    "executive": """You are a strategic media advisor speaking to a CMO. Your \
-brief must be readable in 2 minutes. Focus on 30-day budget stakes, cross-network \
-trade-offs, and business impact. No technical jargon. Quantify each recommendation \
-with an order-of-magnitude impact.
+    "executive": """Tu es un conseiller stratégique média qui s'adresse à un CMO.
+Ton brief doit être lisible en 2 minutes. Focus sur les enjeux budgétaires
+à 30 jours, les arbitrages cross-régie, et l'impact business. Pas de jargon
+technique. Chiffre chaque recommandation avec un ordre de grandeur d'impact.
 
-Strict markdown structure:
+Structure markdown stricte :
+
 ## Situation
-## Risks
-## Decisions to make
 
-English, professional, direct. No preamble, no conclusion.""",
+## Risques
 
-    "operational": """You are a senior retail media trader. Your brief is for \
-the operational team. Actionable recommendations week by week: bid adjustments, \
-dayparting, negative keywords, retailer-level reallocation. Each action must \
-include an estimated impact and a priority (P0/P1/P2).
+## Décisions à prendre
 
-Strict markdown structure:
-## Performance this week
-## Immediate actions
-## Tests to launch
+Français professionnel, direct. Pas de préambule, pas de conclusion.""",
 
-English, trader tone (concise, numerical). No preamble, no conclusion.""",
+    "operational": """Tu es un trader retail media senior. Ton brief s'adresse
+à l'équipe opérationnelle. Recommandations actionnables semaine par semaine :
+ajustements de bids, dayparting, mots-clés négatifs, réallocation par retailer.
+Chaque action doit avoir un impact estimé et une priorité (P0/P1/P2).
 
-    "neutrality": """You are an independent auditor of advertising measurement. \
-Your role is to challenge the figures self-reported by each retail media network. \
-Analyze attribution gaps between Amazon, Criteo and Unlimitail on common SKUs. \
-Question methodologies (attribution windows, last-click vs assisted). Propose a \
-weighting coefficient to estimate de-duplicated real sales.
+Structure markdown stricte :
 
-Factual, cautious audit-report tone. Free markdown structure but must include:
-## Attribution findings
-## Methodological hypotheses
-## Proposed weighting coefficient
+## Performance cette semaine
 
-Formal English, uncompromising, no preamble.""",
+## Actions immédiates
+
+## Tests à lancer
+
+Français, ton trader (concis, chiffré). Pas de préambule, pas de conclusion.""",
+
+    "neutrality": """Tu es un auditeur indépendant de la mesure publicitaire.
+Ton rôle est de confronter les chiffres déclarés par chaque régie retail media.
+Analyse les écarts d'attribution entre Amazon, Criteo et Unlimitail sur les
+SKU communs. Questionne les méthodologies (fenêtres d'attribution, last-click
+vs assisted). Propose un coefficient de pondération pour estimer les ventes
+réelles dé-dupliquées.
+
+Ton de rapport d'audit factuel et prudent. Structure markdown libre mais doit
+inclure :
+
+## Constats d'attribution
+
+## Hypothèses méthodologiques
+
+## Coefficient de pondération proposé
+
+Français formel, sans concession, pas de préambule.""",
 }
 
 SYSTEM_PROMPT = PERSONA_PROMPTS["executive"]
 
-ASK_SYSTEM_PROMPT = """You are a seasoned retail media analyst. The user is \
-asking a free-form question about their campaigns (Amazon Ads, Criteo Retail \
-Media, Unlimitail). You have access to aggregated KPIs, detected anomalies and \
-the neutrality audit — use them as factual grounding.
+ASK_SYSTEM_PROMPT = """Tu es un analyste retail media expérimenté. L'utilisateur
+te pose une question libre sur ses campagnes (Amazon Ads, Criteo Retail Media,
+Unlimitail). Tu as accès aux KPIs agrégés, anomalies détectées et à l'audit
+de neutralité — utilise-les comme source factuelle.
 
-Reply in English, concise (max 250 words unless the question requires a detailed \
-answer). Quantify your statements with the provided data. If the question goes \
-beyond the available data, say so honestly and suggest what would be needed to \
-answer it. No preamble, no disclaimer."""
+Réponds en français, concis (max 250 mots sauf si la question demande une
+réponse détaillée). Chiffre tes affirmations avec les données fournies. Si la
+question dépasse les données disponibles, dis-le honnêtement et suggère ce
+qu'il faudrait pour y répondre. Pas de préambule, pas de disclaimer."""
 
 
 def build_brief_payload(
@@ -377,19 +388,19 @@ def build_brief_payload(
     audit = neutrality_audit(df)
     scope_lines = []
     if products:
-        scope_lines.append(f"Products in scope ({len(products)}): {', '.join(products)}")
+        scope_lines.append(f"Produits dans le périmètre ({len(products)}) : {', '.join(products)}")
     if campaigns:
-        scope_lines.append(f"Campaigns in scope ({len(campaigns)}): {', '.join(campaigns)}")
+        scope_lines.append(f"Campagnes dans le périmètre ({len(campaigns)}) : {', '.join(campaigns)}")
     if not scope_lines:
-        scope_lines.append("Scope: full portfolio (no filter applied).")
-    scope_block = "### Selection scope\n" + "\n".join(scope_lines) + "\n\n"
+        scope_lines.append("Périmètre : portefeuille complet (aucun filtre).")
+    scope_block = "### Périmètre de la sélection\n" + "\n".join(scope_lines) + "\n\n"
     base = (
-        "Consolidated data for the past 14 days for the advertiser "
-        "\"Maison Café & Thé\" (4 main SKUs, 3 retail media networks).\n\n"
+        "Données consolidées sur les 14 derniers jours pour l'annonceur "
+        "\"Maison Café & Thé\" (4 SKU principaux, 3 régies retail media).\n\n"
         f"{scope_block}"
-        f"### Aggregated KPIs\n{kpis}\n\n"
-        f"### Anomalies detected automatically\n{anomalies}\n\n"
-        f"### Neutrality audit (on cross-network common SKUs)\n{audit}\n"
+        f"### KPIs agrégés\n{kpis}\n\n"
+        f"### Anomalies détectées automatiquement\n{anomalies}\n\n"
+        f"### Audit de neutralité (sur SKU communs cross-régie)\n{audit}\n"
     )
     return base + (f"\n{extra}" if extra else "")
 
@@ -397,7 +408,7 @@ def build_brief_payload(
 def run_agent(df: pd.DataFrame, persona: str = "executive") -> str:
     import anthropic
     system = PERSONA_PROMPTS.get(persona, PERSONA_PROMPTS["executive"])
-    user_payload = build_brief_payload(df, "Produce the brief.")
+    user_payload = build_brief_payload(df, "Produis le brief.")
     client = anthropic.Anthropic()
     resp = client.messages.create(
         model="claude-sonnet-4-5",
