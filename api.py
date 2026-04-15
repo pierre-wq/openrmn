@@ -37,7 +37,7 @@ log = logging.getLogger("openrmn")
 
 ROOT_PATH = os.getenv("ROOT_PATH", "")
 PUBLIC_BASE = os.getenv("PUBLIC_BASE", "https://lab.holco.co/retail-audience")
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 CACHE_TTL_S = 300
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
@@ -388,8 +388,12 @@ def _split_csv(value: Optional[str]) -> list:
 
 
 @app.get("/api/catalog")
-def api_catalog(mode: str = Query("auto", pattern="^(auto|mock|real)$")):
+def api_catalog(
+    mode: str = Query("auto", pattern="^(auto|mock|real)$"),
+    sources: Optional[str] = None,
+):
     df = _wrap_real(lambda: get_df(mode=mode), mode)
+    df = apply_filters(df, sources=_split_csv(sources))
     return build_catalog(df, period_days=_cache.get(mode, _cache["auto"]).get("days", 14))
 
 
@@ -398,9 +402,10 @@ def api_kpis(
     mode: str = Query("auto", pattern="^(auto|mock|real)$"),
     products: Optional[str] = None,
     campaigns: Optional[str] = None,
+    sources: Optional[str] = None,
 ):
     df = _wrap_real(lambda: get_df(mode=mode), mode)
-    df = apply_filters(df, _split_csv(products), _split_csv(campaigns))
+    df = apply_filters(df, _split_csv(products), _split_csv(campaigns), _split_csv(sources))
     return compute_kpis(df)
 
 
@@ -409,9 +414,10 @@ def api_anomalies(
     mode: str = Query("auto", pattern="^(auto|mock|real)$"),
     products: Optional[str] = None,
     campaigns: Optional[str] = None,
+    sources: Optional[str] = None,
 ):
     df = _wrap_real(lambda: get_df(mode=mode), mode)
-    df = apply_filters(df, _split_csv(products), _split_csv(campaigns))
+    df = apply_filters(df, _split_csv(products), _split_csv(campaigns), _split_csv(sources))
     return detect_anomalies(df)
 
 
@@ -420,9 +426,10 @@ def api_audit(
     mode: str = Query("auto", pattern="^(auto|mock|real)$"),
     products: Optional[str] = None,
     campaigns: Optional[str] = None,
+    sources: Optional[str] = None,
 ):
     df = _wrap_real(lambda: get_df(mode=mode), mode)
-    df = apply_filters(df, _split_csv(products), _split_csv(campaigns))
+    df = apply_filters(df, _split_csv(products), _split_csv(campaigns), _split_csv(sources))
     return neutrality_audit(df)
 
 
@@ -431,11 +438,10 @@ def api_product_detail(
     product: str = Query(..., min_length=1),
     mode: str = Query("auto", pattern="^(auto|mock|real)$"),
     campaigns: Optional[str] = None,
+    sources: Optional[str] = None,
 ):
     df = _wrap_real(lambda: get_df(mode=mode), mode)
-    camp_list = _split_csv(campaigns)
-    if camp_list:
-        df = apply_filters(df, None, camp_list)
+    df = apply_filters(df, None, _split_csv(campaigns), _split_csv(sources))
     return product_detail(df, product)
 
 
@@ -445,10 +451,11 @@ def api_raw(
     mode: str = Query("auto", pattern="^(auto|mock|real)$"),
     products: Optional[str] = None,
     campaigns: Optional[str] = None,
+    sources: Optional[str] = None,
 ):
     days = max(1, min(days, 90))
     df = _wrap_real(lambda: get_df(days=days, mode=mode), mode)
-    df = apply_filters(df, _split_csv(products), _split_csv(campaigns))
+    df = apply_filters(df, _split_csv(products), _split_csv(campaigns), _split_csv(sources))
     return df_to_records(df)
 
 
@@ -457,9 +464,10 @@ def api_daily(
     mode: str = Query("auto", pattern="^(auto|mock|real)$"),
     products: Optional[str] = None,
     campaigns: Optional[str] = None,
+    sources: Optional[str] = None,
 ):
     df = _wrap_real(lambda: get_df(mode=mode), mode)
-    df = apply_filters(df, _split_csv(products), _split_csv(campaigns))
+    df = apply_filters(df, _split_csv(products), _split_csv(campaigns), _split_csv(sources))
     if df.empty:
         return {"dates": [], "series": {}}
     grouped = df.groupby(["date", "rmn"])[["spend_eur", "sales_eur"]].sum().reset_index()
@@ -516,9 +524,11 @@ async def api_brief(
     persona: str = Query("executive", pattern="^(executive|operational|neutrality)$"),
     products: Optional[str] = None,
     campaigns: Optional[str] = None,
+    sources: Optional[str] = None,
 ):
     prod_list = _split_csv(products)
     camp_list = _split_csv(campaigns)
+    src_list = _split_csv(sources)
 
     async def event_gen():
         try:
@@ -526,7 +536,7 @@ async def api_brief(
         except Exception as e:
             yield {"event": "error", "data": json.dumps({"message": f"Échec du fetch {mode} : {e}"})}
             return
-        df = apply_filters(df, prod_list, camp_list)
+        df = apply_filters(df, prod_list, camp_list, src_list)
         if df.empty:
             yield {"event": "error", "data": json.dumps({"message": f"Aucune donnée en mode {mode} pour la sélection — brief impossible."})}
             return
@@ -547,12 +557,16 @@ async def api_ask(request: Request):
         mode = "auto"
     raw_products = body.get("products") or []
     raw_campaigns = body.get("campaigns") or []
+    raw_sources = body.get("sources") or []
     if isinstance(raw_products, str):
         raw_products = _split_csv(raw_products)
     if isinstance(raw_campaigns, str):
         raw_campaigns = _split_csv(raw_campaigns)
+    if isinstance(raw_sources, str):
+        raw_sources = _split_csv(raw_sources)
     prod_list = [str(p).strip() for p in raw_products if str(p).strip()]
     camp_list = [str(c).strip() for c in raw_campaigns if str(c).strip()]
+    src_list = [str(s).strip() for s in raw_sources if str(s).strip()]
     if not question:
         raise HTTPException(400, "Le champ 'question' est requis.")
 
@@ -562,7 +576,7 @@ async def api_ask(request: Request):
         except Exception as e:
             yield {"event": "error", "data": json.dumps({"message": f"Échec du fetch {mode} : {e}"})}
             return
-        df = apply_filters(df, prod_list, camp_list)
+        df = apply_filters(df, prod_list, camp_list, src_list)
         payload = build_brief_payload(
             df, f"### Question de l'utilisateur\n{question}\n\nRéponds.",
             products=prod_list, campaigns=camp_list,

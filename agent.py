@@ -116,15 +116,27 @@ def detect_anomalies(df: pd.DataFrame) -> List[Dict[str, Any]]:
     return anomalies
 
 
+SOURCE_TO_RMN: Dict[str, str] = {
+    "amazon": "Amazon Ads",
+    "criteo": "Criteo Retail Media",
+    "unlimitail": "Unlimitail",
+}
+
+
 def apply_filters(
     df: pd.DataFrame,
     products: List[str] | None = None,
     campaigns: List[str] | None = None,
+    sources: List[str] | None = None,
 ) -> pd.DataFrame:
-    """Filtre un DataFrame par liste de produits et/ou campaign_id (intersection)."""
+    """Filtre un DataFrame par sources (régies), produits et/ou campaign_id."""
     if df.empty:
         return df
     out = df
+    if sources:
+        wanted_rmns = {SOURCE_TO_RMN.get(s.strip().lower(), s.strip()) for s in sources if s and s.strip()}
+        if wanted_rmns:
+            out = out[out["rmn"].isin(wanted_rmns)]
     if products:
         wanted = {p.strip().lower() for p in products if p and p.strip()}
         if wanted:
