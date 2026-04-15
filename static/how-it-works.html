@@ -479,6 +479,70 @@ class UnifiedRow:
   </section>
 
   <section>
+    <h2 id="privacy">Privacy by design &amp; deployment options</h2>
+
+    <p>Retail media data is sensitive. Campaign budgets, attributed sales, product margins, customer acquisition costs — this is information your CFO would not want competitors, ad networks, or even your own SaaS vendors to see in aggregate. openRMN is designed around this constraint from day one.</p>
+
+    <h3>Three deployment modes for three risk profiles</h3>
+
+    <p>Unlike proprietary SaaS competitors (Skai, Improvado, Pacvue, Mimbi), openRMN is open source and can be deployed in three different modes depending on how much control you want over your data.</p>
+
+    <ol class="timeline">
+      <li>
+        <strong>Self-hosted (most secure)</strong>
+        <p>You run openRMN on your own infrastructure — a server in your datacenter, a VPC in your AWS/GCP/Azure account, or even a Raspberry Pi in your office. Your retail media data never leaves your network. The only outbound calls are to the retail networks' APIs (Amazon, Criteo, Unlimitail) which you already trust by definition. Recommended for large advertisers with internal data governance constraints.</p>
+      </li>
+      <li>
+        <strong>Private cloud (managed by your IT team)</strong>
+        <p>Deploy openRMN in a Docker container on your existing cloud infrastructure. Same isolation as self-hosted, with the convenience of cloud-native deployment. Compatible with Kubernetes, ECS, Cloud Run, Container Instances. A single Dockerfile is all you need — full deployment guide in the GitHub repository.</p>
+      </li>
+      <li>
+        <strong>Hosted demo (this lab.holco.co instance)</strong>
+        <p>Run by openRMN's maintainers for evaluation purposes only. Convenient for trying out the product without any setup, but not intended for production data. We strongly recommend self-hosting before connecting real campaign accounts.</p>
+      </li>
+    </ol>
+
+    <h3>What data leaves your server</h3>
+
+    <p>This is the question to ask any analytics vendor. Here is the honest answer for openRMN:</p>
+
+    <ul>
+      <li><strong>To retail media networks (Amazon, Criteo, Unlimitail):</strong> OAuth authorization at setup time, then read-only API calls to fetch your own performance data. Same network calls as if you logged into their dashboards manually. No data flows from openRMN to these networks beyond the API requests themselves.</li>
+
+      <li><strong>To Anthropic (Claude API):</strong> only when you click "Generate brief" or ask a free-form question. Aggregated KPIs (totals, averages, anomalies) are sent — never raw customer data, never shopper-level information, never PII. Anthropic's commercial terms contractually prohibit using API inputs for model training. If even this minimal exposure is unacceptable, the AI agent can be disabled entirely (set <code>ANTHROPIC_API_KEY</code> to empty) and openRMN continues to function as a deterministic analytics tool.</li>
+
+      <li><strong>To anyone else:</strong> nothing. No analytics tracker, no telemetry, no usage stats sent to openRMN maintainers. We don't know who uses our software unless they tell us. This is a deliberate design choice.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Run it air-gapped if you want</strong>
+      <p>If you self-host openRMN and disable the Claude integration, the only outbound network calls left are to the retail media networks' own APIs. You can audit this with a packet capture: openRMN makes zero calls to any third party beyond the networks you explicitly connected.</p>
+    </div>
+
+    <h3>Authentication &amp; secret management</h3>
+
+    <p>OAuth refresh tokens and API credentials are stored in a server-side <code>.env</code> file with restrictive Unix permissions (<code>chmod 600</code>, owner-readable only). They never reach the browser, never appear in logs, never travel through any third party. The frontend interacts with the openRMN backend over a session cookie signed with HMAC-SHA256 using a per-deployment secret you control.</p>
+
+    <p>Tokens can be revoked at any time from the originating network's dashboard. openRMN holds no privileged credentials — it operates strictly under the read-only scope you grant during the OAuth flow.</p>
+
+    <h3>GDPR &amp; European data residency</h3>
+
+    <p>openRMN itself does not collect or process personal data of end consumers. The data ingested via retail media APIs is aggregated campaign performance — impression counts, click counts, attributed sales totals — not individual shopper records. As such, openRMN's use does not introduce new GDPR processing obligations beyond those you already have with the retail networks themselves.</p>
+
+    <p>For French and European advertisers concerned about data residency: in self-hosted mode, all data stays on the server you choose. The only cross-border data flow is the optional Anthropic API call, for which Anthropic offers EU-resident processing options for enterprise customers — see <a href="https://www.anthropic.com/legal/commercial-terms" target="_blank" rel="noopener">Anthropic's commercial terms</a>. Other LLM providers with EU-hosted infrastructure (Mistral, OVH AI Endpoints) can be swapped in by editing a single function in <code>agent.py</code>.</p>
+
+    <h3>What we will never do</h3>
+
+    <ul>
+      <li>Sell, share, rent, or analyze your campaign data for any purpose other than serving you.</li>
+      <li>Train AI models on your retail media performance figures.</li>
+      <li>Add silent telemetry, usage analytics, or "phone home" calls to openRMN. The repository's network footprint is auditable line by line.</li>
+      <li>Lock you into a proprietary format. Every UnifiedRow can be exported to CSV, Parquet, or any DataFrame-compatible format with a single function call.</li>
+      <li>Charge you for accessing your own data. The open source product is free forever. Premium services (managed hosting, third-party panel data via Wakoopa, dedicated support) are separately priced and clearly identified.</li>
+    </ul>
+  </section>
+
+  <section>
     <h2 id="end-result">The end result for Maison Dubois</h2>
     <p>After a 30-minute onboarding (10 min for the three OAuth connections, 10 min for uploading the EAN mapping CSV, 10 min for the first data fetch), Maison Dubois wakes up the next day with:</p>
     <ul>
@@ -489,6 +553,52 @@ class UnifiedRow:
       <li>A conversational AI analyst they can ask anything — "why did my Criteo ROAS drop last Tuesday?" — with answers grounded in their actual data.</li>
     </ul>
     <p>And all of it without opening Excel, ever again.</p>
+  </section>
+
+  <section>
+    <h2 id="scope">What openRMN is NOT</h2>
+
+    <p>Naming what a product does is easy. Naming what it deliberately doesn't do is more useful — it tells you whether the tool fits your workflow.</p>
+
+    <ul>
+      <li><strong>openRMN is not a DSP or a media buying tool.</strong> It does not buy ads, edit campaigns, change bids, or push budget changes back to the networks. It is read-only, by design. For activation and execution, look at tools like Concord, Pacvue, or the native interfaces of each network.</li>
+
+      <li><strong>openRMN is not a tag manager or pixel-based tracker.</strong> It does not deploy JavaScript on your website, does not track individual shoppers, and does not build audience segments. Everything it sees comes from the official measurement APIs of each retail media network.</li>
+
+      <li><strong>openRMN is not a replacement for an MMM or an MTA platform.</strong> Marketing Mix Modeling and Multi-Touch Attribution require longer historical data, channel-mix modeling, and statistical techniques outside the scope of this tool. openRMN focuses on the cross-network retail media problem specifically — it complements MMM rather than replaces it.</li>
+
+      <li><strong>openRMN is not a CDP or a customer database.</strong> No PII is stored, no shopper-level data is processed. The smallest unit of analysis is a campaign × product × day row. Customer-level insights belong in your CDP.</li>
+
+      <li><strong>openRMN is not a panel-based measurement provider.</strong> For "true" cross-network deduplicated sales (the answer to "what would my sales have been without ads at all?"), you need an independent panel like Wakoopa, NielsenIQ, Kantar Worldpanel, or Circana. openRMN can integrate with these panels as data sources to enrich its neutrality audit, but does not replace them.</li>
+
+      <li><strong>openRMN is not a fully autonomous AI agent.</strong> The AI generates briefs and answers questions, but it does not take actions on your behalf. Every recommendation requires a human to act on it (in your media buying tool, your team, your budget process). This is a deliberate trust boundary — automation of analysis, not of decision.</li>
+    </ul>
+
+    <div class="callout">
+      <strong>Where openRMN sits in your stack</strong>
+      <p>Think of openRMN as a measurement and audit layer between your retail media activation tools and your business reporting (Looker, Power BI, Tableau, your CFO's spreadsheet). It does one thing well: consolidate and audit. It deliberately does not try to do everything.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="comparison">How we compare to existing tools</h2>
+
+    <p>The retail media analytics space has several established players. Here is an honest positioning of openRMN against them. Where they are better, we say so.</p>
+
+    <h3>vs Skai (formerly Kenshoo)</h3>
+    <p>Skai is a mature, full-stack retail media platform with bid optimization, campaign management, and reporting in one suite. It serves enterprise advertisers and agencies with €50k+/year contracts. openRMN does not compete on activation features — Skai is far ahead there. We focus on the measurement and audit layer that Skai's own reporting cannot provide neutrally (since Skai is paid by the advertiser, but bids are placed inside the networks' walled gardens).</p>
+
+    <h3>vs Improvado / Supermetrics / Dataslayer</h3>
+    <p>These are excellent ETL connectors that pull retail media data into Google Sheets, BigQuery, or Snowflake. They do the data plumbing well. openRMN does the analytics layer that they leave to the user — anomaly detection, trust scoring, double-counting audit, AI briefs. You can use both: Improvado as the connector, openRMN as the analytics on top, if your team prefers that split.</p>
+
+    <h3>vs Mimbi</h3>
+    <p>Mimbi is the closest comparable: a retail media data warehouse with cross-network normalization. They are further along on production deployment and connector breadth. openRMN's differentiation is being open source (auditable code, no vendor lock-in) and shipping the AI-driven audit layer (trust scores, harmonization simulator, double-counting visualization) out of the box.</p>
+
+    <h3>vs AudienceProject</h3>
+    <p>AudienceProject is an independent cross-media measurement platform with a strong focus on broadcast TV, CTV, and walled-garden brand campaigns. They use panel-based measurement at scale. openRMN is more narrowly focused on retail media performance specifically and uses network-declared data (not panel data) as its primary source. The two approaches are complementary: AudienceProject for upper-funnel reach and brand impact, openRMN for lower-funnel retail media performance and attribution.</p>
+
+    <h3>vs in-house spreadsheet workflows</h3>
+    <p>This is openRMN's most direct alternative for mid-market advertisers today. The honest comparison: a well-maintained internal spreadsheet can do what openRMN does for KPIs and basic reporting. It cannot do the trust scoring, the cross-network audit, or the AI briefs without significant investment in data engineering and analyst time. openRMN removes the maintenance burden while opening up audit features that manual spreadsheets cannot replicate.</p>
   </section>
 
   <section>
@@ -549,6 +659,20 @@ class UnifiedRow:
       <summary>Why open source?</summary>
       <div class="answer"><p>Because "neutral third party" and "proprietary black box" are contradictions. If we claim to audit the walled gardens, our own code must be auditable too. Every Trust Score formula, every attribution harmonization coefficient, every anomaly detection rule is visible in the GitHub repo.</p></div>
     </details>
+
+    <details class="faq">
+      <summary>Can openRMN see my customers' personal data?</summary>
+      <div class="answer">
+        <p>No. The retail media APIs return aggregated performance data (impressions, clicks, spend, attributed sales counts) — never individual shopper records. openRMN never receives, processes, or stores PII at any point in its pipeline. The smallest unit of data is one campaign × one product × one day.</p>
+      </div>
+    </details>
+
+    <details class="faq">
+      <summary>What if I don't trust Anthropic with my data?</summary>
+      <div class="answer">
+        <p>You can disable the AI agent entirely — set <code>ANTHROPIC_API_KEY</code> to empty and openRMN runs as a pure deterministic analytics tool. You keep all KPIs, anomaly detection, trust scores, and the double-counting audit. You only lose the natural-language briefs and free-form Q&amp;A. Alternatively, swap in another LLM provider (Mistral hosted in France, OVH AI Endpoints, a local Ollama server on your own GPU) by editing one function in <code>agent.py</code> — the agent layer is intentionally provider-agnostic.</p>
+      </div>
+    </details>
   </section>
 
   <section>
@@ -573,10 +697,13 @@ class UnifiedRow:
     <li><a href="#aggregation">7. Per-product aggregation</a></li>
     <li><a href="#analytics">8. KPIs, anomalies, trust</a></li>
     <li><a href="#ai-agent">9. The AI agent</a></li>
-    <li><a href="#end-result">10. What the advertiser sees</a></li>
-    <li><a href="#onboarding">11. Onboarding timeline</a></li>
-    <li><a href="#faq">12. FAQ</a></li>
-    <li><a href="#cta">13. Get started</a></li>
+    <li><a href="#privacy">10. Privacy &amp; deployment</a></li>
+    <li><a href="#end-result">11. What the advertiser sees</a></li>
+    <li><a href="#scope">12. What openRMN is not</a></li>
+    <li><a href="#comparison">13. How we compare</a></li>
+    <li><a href="#onboarding">14. Onboarding timeline</a></li>
+    <li><a href="#faq">15. FAQ</a></li>
+    <li><a href="#cta">16. Get started</a></li>
   </ol>
 </aside>
 
