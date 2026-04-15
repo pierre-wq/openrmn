@@ -1,6 +1,9 @@
 """openRMN — API FastAPI : analytics + OAuth Amazon + dashboard."""
 from __future__ import annotations
 
+import asyncio
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -15,7 +18,7 @@ import httpx
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
 
@@ -34,11 +37,40 @@ log = logging.getLogger("openrmn")
 
 ROOT_PATH = os.getenv("ROOT_PATH", "")
 PUBLIC_BASE = os.getenv("PUBLIC_BASE", "https://lab.holco.co/retail-audience")
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 CACHE_TTL_S = 300
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
 ENV_PATH = BASE_DIR / ".env"
+
+# ─── Auth (password + signed cookie) ───────────────────────────────────────
+OPENRMN_PASSWORD = os.getenv("OPENRMN_PASSWORD", "")
+SESSION_SECRET = os.getenv("OPENRMN_SESSION_SECRET", secrets.token_urlsafe(32))
+SESSION_COOKIE_NAME = "openrmn_session"
+SESSION_TTL_S = 12 * 3600  # 12h
+PUBLIC_PATHS = {
+    "/login", "/api/login",
+    "/api/health",
+    "/api/amazon/oauth/start", "/api/amazon/oauth/callback",
+}
+PUBLIC_PREFIXES = ("/static/",)
+
+
+def make_session_token() -> str:
+    ts = str(int(time.time()))
+    sig = hmac.new(SESSION_SECRET.encode(), ts.encode(), hashlib.sha256).hexdigest()
+    return f"{ts}.{sig}"
+
+
+def verify_session_token(token: str) -> bool:
+    try:
+        ts, sig = token.split(".", 1)
+        expected = hmac.new(SESSION_SECRET.encode(), ts.encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected):
+            return False
+        return (time.time() - int(ts)) < SESSION_TTL_S
+    except Exception:
+        return False
 
 app = FastAPI(
     title="openRMN",
@@ -46,6 +78,25 @@ app = FastAPI(
     root_path=ROOT_PATH,
     description="Retail Media Analytics API — Amazon Ads × Criteo",
 )
+
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    # If no password configured → dev mode, open access.
+    if not OPENRMN_PASSWORD:
+        return await call_next(request)
+    path = request.url.path
+    if path in PUBLIC_PATHS or any(path.startswith(p) for p in PUBLIC_PREFIXES):
+        return await call_next(request)
+    token = request.cookies.get(SESSION_COOKIE_NAME, "")
+    if verify_session_token(token):
+        return await call_next(request)
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        return RedirectResponse(url=f"{ROOT_PATH}/login", status_code=302)
+    return JSONResponse({"error": "unauthorized"}, status_code=401)
+
+
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
 )
@@ -138,6 +189,37 @@ def index():
 @app.get("/api/health")
 def health():
     return {"status": "ok", "version": VERSION}
+
+
+# ─── Auth endpoints ────────────────────────────────────────────────────────
+@app.get("/login")
+def login_page():
+    return FileResponse(
+        str(STATIC_DIR / "login.html"),
+        headers={"Cache-Control": "no-cache, must-revalidate"},
+    )
+
+
+@app.post("/api/login")
+async def api_login(request: Request):
+    body = await request.json()
+    password = str(body.get("password", ""))
+    if not OPENRMN_PASSWORD:
+        return JSONResponse({"status": "ok", "note": "auth disabled"})
+    if not hmac.compare_digest(password, OPENRMN_PASSWORD):
+        await asyncio.sleep(0.5)  # anti brute-force
+        return JSONResponse({"error": "invalid_password"}, status_code=401)
+    resp = JSONResponse({"status": "ok"})
+    resp.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=make_session_token(),
+        max_age=SESSION_TTL_S,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        path=ROOT_PATH or "/",
+    )
+    return resp
 
 
 # ─── Sources status ────────────────────────────────────────────────────────

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>openRMN — Accès au lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F5F5F4;
+  --text-primary: #1C1C1C;
+  --text-secondary: #6B6B6B;
+  --text-tertiary: #9B9B9B;
+  --accent: #2752E7;
+  --accent-hover: #6B82EE;
+  --border: #D5D5D0;
+  --error: #B0201C;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+body { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+.wrap { width: 100%; max-width: 360px; }
+.logo { font-family: "Source Serif 4", Georgia, serif; font-weight: 500; font-size: 18px; color: var(--text-primary); margin-bottom: 48px; text-align: left; }
+h1 { font-family: "Source Serif 4", Georgia, serif; font-weight: 500; font-size: 28px; letter-spacing: -0.01em; margin-bottom: 10px; }
+.sub { color: var(--text-secondary); font-size: 14px; line-height: 1.65; margin-bottom: 28px; }
+form { display: flex; flex-direction: column; gap: 12px; }
+input[type="password"] {
+  width: 100%; padding: 12px 14px; font-size: 14px;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg-primary); color: var(--text-primary);
+  font-family: inherit; outline: none;
+}
+input[type="password"]:focus { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+button {
+  width: 100%; padding: 12px 16px; font-size: 14px; font-weight: 500;
+  background: var(--accent); color: #fff; border: 0; border-radius: 4px;
+  cursor: pointer; font-family: inherit; transition: background 150ms;
+}
+button:hover { background: var(--accent-hover); }
+button:disabled { background: var(--text-tertiary); cursor: not-allowed; }
+.error { color: var(--error); font-size: 13px; min-height: 18px; margin-top: 4px; }
+.footer { margin-top: 48px; color: var(--text-tertiary); font-size: 12px; text-align: left; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">openRMN</div>
+  <h1>Accès au lab</h1>
+  <p class="sub">Démo privée — saisissez le mot de passe communiqué.</p>
+  <form id="login-form" autocomplete="off">
+    <input type="password" id="pw" placeholder="Mot de passe" autofocus required>
+    <button type="submit" id="submit-btn">Entrer →</button>
+    <div class="error" id="err"></div>
+  </form>
+  <div class="footer">openRMN · v0.3 · MIT</div>
+</div>
+<script>
+const form = document.getElementById("login-form");
+const pw = document.getElementById("pw");
+const err = document.getElementById("err");
+const btn = document.getElementById("submit-btn");
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  err.textContent = "";
+  btn.disabled = true;
+  try {
+    const r = await fetch("./api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pw.value }),
+    });
+    if (r.ok) {
+      window.location.replace("./");
+      return;
+    }
+    if (r.status === 401) {
+      err.textContent = "Mot de passe incorrect";
+    } else {
+      err.textContent = "Erreur " + r.status;
+    }
+  } catch (e) {
+    err.textContent = "Erreur réseau : " + e.message;
+  } finally {
+    btn.disabled = false;
+    pw.select();
+  }
+});
+</script>
+</body>
+</html>
