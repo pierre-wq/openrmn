@@ -507,25 +507,25 @@ button { font-family: inherit; cursor: pointer; }
     <div class="logo">openRMN</div>
   </div>
   <div class="setup-wrap">
-    <h1 class="setup-title">Configurez votre espace de travail</h1>
-    <p class="setup-sub">Sélectionnez les régies retail media à analyser. openRMN consolidera les données dans un schéma unifié et révèlera les écarts d'attribution.</p>
+    <h1 class="setup-title">Configure your workspace</h1>
+    <p class="setup-sub">Select the retail media networks to analyze. openRMN will consolidate the data into a unified schema and reveal the attribution gaps.</p>
 
     <div class="source-grid" id="source-grid"></div>
 
     <div class="period-block">
-      <label for="period-select" class="period-label">Période d'analyse</label>
+      <label for="period-select" class="period-label">Analysis period</label>
       <div class="period-row">
         <select id="period-select" class="period-select">
-          <option value="7">Les 7 derniers jours</option>
-          <option value="14" selected>Les 14 derniers jours</option>
-          <option value="30">Les 30 derniers jours</option>
+          <option value="7">Last 7 days</option>
+          <option value="14" selected>Last 14 days</option>
+          <option value="30">Last 30 days</option>
         </select>
-        <span class="period-note">Les données mock couvrent toujours 14 jours pour l'instant.</span>
+        <span class="period-note">Mock data always covers 14 days for now.</span>
       </div>
     </div>
 
     <div class="setup-actions">
-      <button class="btn-primary" id="setup-go" type="button">Charger les données →</button>
+      <button class="btn-primary" id="setup-go" type="button">Load data →</button>
       <div class="setup-summary" id="setup-summary">—</div>
     </div>
   </div>
@@ -536,10 +536,10 @@ button { font-family: inherit; cursor: pointer; }
     <div class="logo" data-home="1">openRMN</div>
   </div>
   <div class="anim-wrap">
-    <div class="anim-title">Connexion aux régies retail media…</div>
+    <div class="anim-title">Connecting to retail media networks…</div>
     <div id="conn-lines"></div>
     <div class="ready" id="conn-ready">
-      <div class="ready-text" id="conn-summary">Données consolidées.</div>
+      <div class="ready-text" id="conn-summary">Data consolidated.</div>
       <button class="btn-primary" id="btn-explore" type="button">Continuer →</button>
     </div>
   </div>
@@ -554,23 +554,23 @@ button { font-family: inherit; cursor: pointer; }
         <span class="scope-text" id="scope-text">—</span>
         <span class="scope-caret">▾</span>
         <div class="scope-dropdown" id="scope-dropdown">
-          <button type="button" data-scope-action="sources">Modifier les sources</button>
-          <button type="button" data-scope-action="selection">Modifier la sélection</button>
-          <button type="button" data-scope-action="reload">Recharger les données</button>
+          <button type="button" data-scope-action="sources">Change sources</button>
+          <button type="button" data-scope-action="selection">Change selection</button>
+          <button type="button" data-scope-action="reload">Reload data</button>
         </div>
       </div>
     </div>
   </div>
   <div class="sel-wrap">
-    <h2 class="sel-title">Que voulez-vous analyser ?</h2>
-    <p class="sel-sub">Sélectionnez les produits et/ou campagnes à inclure. openRMN croisera les données des régies actives sur votre sélection.</p>
+    <h2 class="sel-title">What do you want to analyze?</h2>
+    <p class="sel-sub">Select the products and/or campaigns to include. openRMN will cross-reference data from active networks on your selection.</p>
     <div class="sel-grid">
       <div class="sel-col">
         <div class="sel-col-title">Produits</div>
         <div class="sel-col-sub" id="sel-prod-sub">Chargement…</div>
         <div class="sel-list" id="sel-prod-list"></div>
         <div class="sel-toggle-row">
-          <button type="button" data-target="products" data-action="all">Tout sélectionner</button>
+          <button type="button" data-target="products" data-action="all">Select all</button>
           <button type="button" data-target="products" data-action="none">Effacer</button>
         </div>
       </div>
@@ -580,15 +580,15 @@ button { font-family: inherit; cursor: pointer; }
         <div class="sel-col-sub" id="sel-camp-sub">Chargement…</div>
         <div class="sel-list" id="sel-camp-list"></div>
         <div class="sel-toggle-row">
-          <button type="button" data-target="campaigns" data-action="all">Tout sélectionner</button>
+          <button type="button" data-target="campaigns" data-action="all">Select all</button>
           <button type="button" data-target="campaigns" data-action="none">Effacer</button>
         </div>
       </div>
     </div>
     <div class="sel-summary" id="sel-summary">—</div>
     <div class="sel-actions">
-      <button class="btn-primary" id="sel-go" type="button">Analyser la sélection →</button>
-      <button class="btn-link" id="sel-go-all" type="button">Ou analyser l'ensemble du portefeuille →</button>
+      <button class="btn-primary" id="sel-go" type="button">Analyze selection →</button>
+      <button class="btn-link" id="sel-go-all" type="button">Or analyze the entire portfolio →</button>
     </div>
   </div>
 </div>
@@ -602,9 +602,9 @@ button { font-family: inherit; cursor: pointer; }
         <span class="scope-text" id="scope-text-dash">—</span>
         <span class="scope-caret">▾</span>
         <div class="scope-dropdown" id="scope-dropdown-dash">
-          <button type="button" data-scope-action="sources">Modifier les sources</button>
-          <button type="button" data-scope-action="selection">Modifier la sélection</button>
-          <button type="button" data-scope-action="reload">Recharger les données</button>
+          <button type="button" data-scope-action="sources">Change sources</button>
+          <button type="button" data-scope-action="selection">Change selection</button>
+          <button type="button" data-scope-action="reload">Reload data</button>
         </div>
       </div>
     </div>
@@ -622,8 +622,8 @@ button { font-family: inherit; cursor: pointer; }
         <div class="hero-sub" id="hero-sub">Loading consolidated data…</div>
       </div>
       <div class="section">
-        <div class="section-label">Trust Score — fiabilité des régies</div>
-        <div class="section-sub">Méthodologie open source — <a id="trust-method-link">voir le calcul détaillé</a></div>
+        <div class="section-label">Trust Score — network reliability</div>
+        <div class="section-sub">Open methodology — <a id="trust-method-link">see the detailed calculation</a></div>
         <div class="trust-grid" id="trust-grid"></div>
       </div>
       <div class="section">
@@ -643,26 +643,26 @@ button { font-family: inherit; cursor: pointer; }
         <div class="section-label">Neutrality audit — common SKUs</div>
         <div id="audit-wrap"></div>
         <div class="dc-wrap">
-          <div class="dc-title">Audit du double-comptage</div>
+          <div class="dc-title">Double-counting audit</div>
           <div class="dc-kpis" id="dc-kpis"></div>
           <div class="dc-sankey" id="dc-sankey"></div>
           <div class="dc-note" id="dc-note"></div>
         </div>
       </div>
       <div class="section">
-        <div class="section-label">Méthodologies déclarées par les régies</div>
+        <div class="section-label">Declared methodologies</div>
         <div id="meth-wrap"></div>
         <div class="harmo-wrap">
-          <div class="harmo-title">Simulateur d'harmonisation</div>
-          <div class="harmo-sub">Et si toutes les régies utilisaient la même méthodologie ?</div>
+          <div class="harmo-title">Harmonization simulator</div>
+          <div class="harmo-sub">What if all networks used the same methodology?</div>
           <div class="harmo-controls">
             <div class="harmo-field">
-              <label for="harmo-window">Fenêtre cible</label>
+              <label for="harmo-window">Target window</label>
               <select id="harmo-window">
-                <option value="1">1 jour</option>
-                <option value="7" selected>7 jours</option>
-                <option value="14">14 jours</option>
-                <option value="30">30 jours</option>
+                <option value="1">1 day</option>
+                <option value="7" selected>7 days</option>
+                <option value="14">14 days</option>
+                <option value="30">30 days</option>
               </select>
             </div>
             <div class="harmo-field">
@@ -673,7 +673,7 @@ button { font-family: inherit; cursor: pointer; }
                 <option value="mixed">mixed</option>
               </select>
             </div>
-            <button class="harmo-btn" id="harmo-go" type="button">Simuler →</button>
+            <button class="harmo-btn" id="harmo-go" type="button">Simulate →</button>
           </div>
           <div id="harmo-result"></div>
         </div>
@@ -697,8 +697,8 @@ button { font-family: inherit; cursor: pointer; }
         <button data-q="Why does Criteo ROAS diverge?">Why does Criteo ROAS diverge?</button>
         <button data-q="Reallocate my cross-network budget.">Reallocate my cross-network budget</button>
         <button data-q="Which incrementality tests should I run?">Which incrementality tests should I run?</button>
-        <button data-q="__dyn_trust__">Pourquoi le Trust Score de la régie la plus basse est-il faible ?</button>
-        <button data-q="__dyn_overlap__">Combien de ventes sur-attribuées sur le produit le plus concerné ?</button>
+        <button data-q="__dyn_trust__">Why is the lowest network's Trust Score weak?</button>
+        <button data-q="__dyn_overlap__">How many over-attributed sales on the most affected product?</button>
       </div>
       <div class="ai-output" id="ai-output"></div>
     </aside>
@@ -707,36 +707,36 @@ button { font-family: inherit; cursor: pointer; }
 
 <div class="modal-backdrop" id="meth-modal">
   <div class="modal" role="dialog" aria-modal="true">
-    <button class="modal-close" id="meth-modal-close" aria-label="Fermer">×</button>
-    <h2>Méthodologie Trust Score</h2>
+    <button class="modal-close" id="meth-modal-close" aria-label="Close">×</button>
+    <h2>Trust Score methodology</h2>
     <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">
-      Le Trust Score agrège 4 composants sur une échelle 0–100, pondérés ci-dessous.
-      Chaque formule est implémentée dans <code>agent.py</code> (<code>trust_score()</code>)
-      — le code est public sur GitHub.
+      The Trust Score aggregates 4 components on a 0–100 scale, weighted as below.
+      Every formula is implemented in <code>agent.py</code> (<code>trust_score()</code>)
+      — the code is public on GitHub.
     </p>
     <div class="modal-section">
-      <h3>1. Internal consistency — poids 30 %</h3>
-      <p>Variance du ROAS quotidien sur la période. Plus la courbe de ROAS est stable jour après jour, plus la régie est crédible.</p>
+      <h3>1. Internal consistency — weight 30%</h3>
+      <p>Variance of daily ROAS over the period. The more stable the ROAS curve day-to-day, the more credible the network.</p>
       <div class="formula">score = clamp(100 − CV(ROAS_daily) × 100, 0, 100)</div>
     </div>
     <div class="modal-section">
-      <h3>2. Cross-network convergence — poids 25 %</h3>
-      <p>Pour chaque SKU commun entre ≥ 2 régies, on mesure l'écart entre la part des ventes attribuées par la régie et la part équitable (1/N régies). Une régie qui attribue beaucoup plus que les autres a une convergence faible.</p>
+      <h3>2. Cross-network convergence — weight 25%</h3>
+      <p>For each SKU common to ≥ 2 networks, we measure the gap between the network's share of attributed sales and the fair share (1/N networks). A network that attributes much more than peers scores low.</p>
       <div class="formula">score = 100 × Σ (1 − |share_i − 1/N| / (1/N)) · total_i  /  Σ total_i</div>
     </div>
     <div class="modal-section">
-      <h3>3. Methodology transparency — poids 25 %</h3>
-      <p>Score statique basé sur l'information publiquement disponible : fenêtre d'attribution déclarée, type d'attribution documenté, certification MRC. Amazon = 90, Criteo = 70, Unlimitail = 60 (valeurs par défaut).</p>
-      <div class="formula">score = METHODOLOGY_TRANSPARENCY_SCORES[régie]</div>
+      <h3>3. Methodology transparency — weight 25%</h3>
+      <p>Static score based on publicly available information: declared attribution window, documented attribution type, MRC certification. Amazon = 90, Criteo = 70, Unlimitail = 60 (default values).</p>
+      <div class="formula">score = METHODOLOGY_TRANSPARENCY_SCORES[network]</div>
     </div>
     <div class="modal-section">
-      <h3>4. Data freshness — poids 20 %</h3>
-      <p>Délai entre la date la plus récente dans les données et l'instant T. Sous 24 h : 100. Dégradation linéaire jusqu'à 0 au-delà de 7 jours.</p>
-      <div class="formula">score = 100 si age &lt; 1j ; 0 si age ≥ 7j ; sinon 100 × (1 − (age − 1) / 6)</div>
+      <h3>4. Data freshness — weight 20%</h3>
+      <p>Delay between the most recent data timestamp and now. Under 24h: 100. Linear decay to 0 beyond 7 days.</p>
+      <div class="formula">score = 100 if age &lt; 1d; 0 if age ≥ 7d; else 100 × (1 − (age − 1) / 6)</div>
     </div>
     <div class="modal-section">
-      <h3>Score global et grade</h3>
-      <p>Somme pondérée des 4 composants. Grades : A+ (&gt;90), A (&gt;85), B+ (&gt;75), B (&gt;65), C+ (&gt;55), C (&gt;45), D (sinon).</p>
+      <h3>Global score and grade</h3>
+      <p>Weighted sum of the 4 components. Grades: A+ (&gt;90), A (&gt;85), B+ (&gt;75), B (&gt;65), C+ (&gt;55), C (&gt;45), D (otherwise).</p>
     </div>
   </div>
 </div>
@@ -849,14 +849,14 @@ function renderSetupScreen() {
     const srcStatus = status[src.slug] || {};
     let badge, action;
     if (src.slug === "amazon" && srcStatus.mode_available === "real") {
-      badge = `<div class="source-status connected">● Connecté · profile ${srcStatus.profile_id || "EU"}</div>`;
+      badge = `<div class="source-status connected">● Connected · profile ${srcStatus.profile_id || "EU"}</div>`;
       action = `<div class="source-action"><a href="./api/amazon/oauth/start" target="_blank">Reconfigurer →</a></div>`;
     } else if (src.slug === "amazon") {
-      badge = `<div class="source-status mock">◐ Mode démo (mock)</div>`;
+      badge = `<div class="source-status mock">◐ Demo mode (mock)</div>`;
       action = `<div class="source-action"><a href="./api/amazon/oauth/start" target="_blank">Configurer →</a></div>`;
     } else {
-      badge = `<div class="source-status mock">◐ Mode démo (mock)</div>`;
-      action = `<div class="source-action"><span class="muted">Connecteur réel à venir</span></div>`;
+      badge = `<div class="source-status mock">◐ Demo mode (mock)</div>`;
+      action = `<div class="source-action"><span class="muted">Real connector coming soon</span></div>`;
     }
     return `<div class="source-card ${checked ? "checked" : ""}" data-source="${src.slug}">
       <div class="source-head">
@@ -876,7 +876,7 @@ function renderSetupScreen() {
       <div class="source-status coming">${c.eta}</div>
     </div>
   `).join("");
-  const requestCard = `<div class="source-card dashed" id="request-source">+ Demander une nouvelle intégration</div>`;
+  const requestCard = `<div class="source-card dashed" id="request-source">+ Request a new integration</div>`;
   grid.innerHTML = cards + comingCards + requestCard;
   // wire clicks
   grid.querySelectorAll(".source-card[data-source]").forEach(card => {
@@ -891,7 +891,7 @@ function renderSetupScreen() {
     });
   });
   document.getElementById("request-source").addEventListener("click", () => {
-    alert("Contactez l'équipe pour proposer une nouvelle régie : pierre@holco.co");
+    alert("Contact the team to propose a new network: pierre@holco.co");
   });
   // sync period select with state
   const sel = document.getElementById("period-select");
@@ -904,13 +904,13 @@ function updateSetupSummary() {
   const sum = document.getElementById("setup-summary");
   const btn = document.getElementById("setup-go");
   if (n === 0) {
-    sum.textContent = "Sélectionnez au moins une source.";
+    sum.textContent = "Select at least one source.";
     btn.disabled = true;
-    btn.textContent = "Sélectionnez au moins une source";
+    btn.textContent = "Select at least one source";
   } else {
     sum.textContent = `${n} source${n > 1 ? "s" : ""} · ${State.periodDays} jours`;
     btn.disabled = false;
-    btn.textContent = "Charger les données →";
+    btn.textContent = "Load data →";
   }
 }
 
@@ -942,7 +942,7 @@ async function runConnectionAnimation() {
     count: () => countByRmn(s.rmn),
   }));
   lines.push({
-    label: "Normalisation cross-régie",
+    label: "Cross-network normalization",
     count: () => (State.data.raw || []).length,
     suffix: " UnifiedRow",
     sep: true,
@@ -953,7 +953,7 @@ async function runConnectionAnimation() {
   const ready = document.getElementById("conn-ready");
   if (ready) ready.classList.remove("show");
   const summary = document.getElementById("conn-summary");
-  if (summary) summary.textContent = "Données consolidées.";
+  if (summary) summary.textContent = "Data consolidated.";
 
   const els = lines.map(l => {
     if (l.sep) {
@@ -983,7 +983,7 @@ async function runConnectionAnimation() {
   await sleep(400);
   if (ready) ready.classList.add("show");
   const tot = (State.data.raw || []).length;
-  if (summary) summary.textContent = `→ ${fmtNum(tot)} lignes UnifiedRow consolidées.`;
+  if (summary) summary.textContent = `→ ${fmtNum(tot)} UnifiedRow rows consolidated.`;
 }
 
 function countByRmn(rmn) {
@@ -1196,10 +1196,10 @@ function renderAudit(audit) {
 /* Trust Score rendering */
 const TRUST_RMN_LABEL = { amazon: "Amazon Ads", criteo: "Criteo Retail Media", unlimitail: "Unlimitail" };
 const TRUST_COMP_LABELS = {
-  internal_consistency: "Cohérence interne",
-  cross_network_convergence: "Convergence cross-régie",
-  methodology_transparency: "Transparence méthodo",
-  data_freshness: "Fraîcheur des données",
+  internal_consistency: "Internal consistency",
+  cross_network_convergence: "Cross-network convergence",
+  methodology_transparency: "Methodology transparency",
+  data_freshness: "Data freshness",
 };
 function gradeClass(grade) {
   if (!grade) return "grade-D";
@@ -1216,7 +1216,7 @@ function renderTrustScore(trust) {
   if (!grid) return;
   const slugs = ["amazon", "criteo", "unlimitail"].filter(s => trust[s]);
   if (!slugs.length) {
-    grid.innerHTML = '<div class="signals-empty">Aucune donnée pour calculer le Trust Score.</div>';
+    grid.innerHTML = '<div class="signals-empty">No data available to compute Trust Score.</div>';
     return;
   }
   grid.innerHTML = slugs.map(slug => {
@@ -1240,7 +1240,7 @@ function renderTrustScore(trust) {
       </div>
       <div class="trust-components">${compHtml}</div>
       <ul style="margin:0 0 14px 18px;font-size:12px;color:var(--text-secondary);line-height:1.55;">${findings}</ul>
-      <button class="trust-meth-link" data-meth-open="${slug}">Voir la méthodologie →</button>
+      <button class="trust-meth-link" data-meth-open="${slug}">See methodology →</button>
     </div>`;
   }).join("");
   grid.querySelectorAll("[data-meth-open]").forEach(b => {
@@ -1255,15 +1255,15 @@ function renderDoubleCounting(dc) {
   const note = document.getElementById("dc-note");
   if (!kpis || !sank) return;
   if (!dc || !dc.total_attributed) {
-    kpis.innerHTML = '<div class="signals-empty">Aucune donnée cross-régie pour l\'audit de double-comptage.</div>';
+    kpis.innerHTML = '<div class="signals-empty">No cross-network data for double-counting audit.</div>';
     sank.innerHTML = "";
     note.textContent = "";
     return;
   }
   kpis.innerHTML = `
-    <div class="dc-kpi declared"><div class="v">${fmtEur(dc.total_attributed)}</div><div class="l">Ventes auto-déclarées</div></div>
-    <div class="dc-kpi real"><div class="v">${fmtEur(dc.estimated_real)}</div><div class="l">Ventes réelles estimées</div></div>
-    <div class="dc-kpi overlap"><div class="v">${fmtEur(dc.overlap_amount)}</div><div class="l">Sur-attribution</div><div class="sub">= ${fmtNum(dc.overlap_pct)}% du total déclaré</div></div>
+    <div class="dc-kpi declared"><div class="v">${fmtEur(dc.total_attributed)}</div><div class="l">Self-declared sales</div></div>
+    <div class="dc-kpi real"><div class="v">${fmtEur(dc.estimated_real)}</div><div class="l">Estimated real sales</div></div>
+    <div class="dc-kpi overlap"><div class="v">${fmtEur(dc.overlap_amount)}</div><div class="l">Over-attribution</div><div class="sub">= ${fmtNum(dc.overlap_pct)}% of declared total</div></div>
   `;
   sank.innerHTML = renderSankey(dc);
   note.textContent = dc.note || "";
@@ -1287,8 +1287,8 @@ function renderSankey(dc) {
 
   // Right nodes: Real and Overlap
   const rightNodes = [
-    { label: "Ventes réelles", value: dc.estimated_real, kind: "real" },
-    { label: "Sur-attribution", value: dc.overlap_amount, kind: "overlap" },
+    { label: "Real sales", value: dc.estimated_real, kind: "real" },
+    { label: "Overlap", value: dc.overlap_amount, kind: "overlap" },
   ].filter(n => n.value > 0);
   const rightTotal = rightNodes.reduce((s, n) => s + n.value, 0);
   const rightGapTotal = gap * (rightNodes.length - 1);
@@ -1355,7 +1355,7 @@ function renderMethodology(meth) {
   if (!wrap) return;
   const slugs = ["amazon", "criteo", "unlimitail"].filter(s => meth[s]);
   if (!slugs.length) {
-    wrap.innerHTML = '<div class="signals-empty">Méthodologies non disponibles.</div>';
+    wrap.innerHTML = '<div class="signals-empty">Methodologies unavailable.</div>';
     return;
   }
   const rows = slugs.map(s => {
@@ -1366,10 +1366,10 @@ function renderMethodology(meth) {
     const mrc = m.mrc_certified ? '<span class="meth-yes">✓</span>' : '<span class="meth-no">—</span>';
     const doc = m.documentation_url
       ? `<a href="${m.documentation_url}" target="_blank" rel="noopener">↗</a>`
-      : '<span class="meth-no" style="font-style:italic;">non publiée</span>';
+      : '<span class="meth-no" style="font-style:italic;">not published</span>';
     return `<tr>
       <td><strong>${label}</strong></td>
-      <td>${m.attribution_window_days} jours</td>
+      <td>${m.attribution_window_days} days</td>
       <td>${m.attribution_type}</td>
       <td class="c">${vt}</td>
       <td class="c">${off}</td>
@@ -1379,7 +1379,7 @@ function renderMethodology(meth) {
   }).join("");
   wrap.innerHTML = `<table class="meth-table">
     <thead><tr>
-      <th>Régie</th><th>Fenêtre attrib.</th><th>Type</th>
+      <th>Network</th><th>Attr. window</th><th>Type</th>
       <th class="c">View-through</th><th class="c">Offline</th><th class="c">MRC</th><th class="c">Doc</th>
     </tr></thead>
     <tbody>${rows}</tbody>
@@ -1393,13 +1393,13 @@ async function runHarmonization() {
   const w = document.getElementById("harmo-window").value;
   const t = document.getElementById("harmo-type").value;
   btn.disabled = true;
-  out.innerHTML = '<div style="margin-top:18px;color:var(--text-tertiary);font-size:13px;">Calcul en cours…</div>';
+  out.innerHTML = '<div style="margin-top:18px;color:var(--text-tertiary);font-size:13px;">Computing…</div>';
   try {
     const extra = `window=${encodeURIComponent(w)}&type=${encodeURIComponent(t)}`;
     const data = await fetchJSON("./api/harmonization-simulator" + q(extra));
     out.innerHTML = renderHarmonizationResult(data);
   } catch (e) {
-    out.innerHTML = `<div style="margin-top:18px;color:var(--text-primary);font-size:13px;">Erreur : ${e.message}</div>`;
+    out.innerHTML = `<div style="margin-top:18px;color:var(--text-primary);font-size:13px;">Error: ${e.message}</div>`;
   } finally {
     btn.disabled = false;
   }
@@ -1407,7 +1407,7 @@ async function runHarmonization() {
 function renderHarmonizationResult(data) {
   const delta = data.delta_per_network || {};
   const slugs = ["amazon", "criteo", "unlimitail"].filter(s => delta[s]);
-  if (!slugs.length) return '<div style="margin-top:18px;color:var(--text-tertiary);font-size:13px;">Aucune donnée à harmoniser.</div>';
+  if (!slugs.length) return '<div style="margin-top:18px;color:var(--text-tertiary);font-size:13px;">No data to harmonize.</div>';
   const leftRows = slugs.map(s => `
     <div class="harmo-row"><span>${delta[s].rmn_label}</span><span class="v">${fmtNum(delta[s].roas_before)}x</span></div>
   `).join("");
@@ -1416,15 +1416,15 @@ function renderHarmonizationResult(data) {
     const sign = dp > 0 ? `+${fmtNum(dp)}%` : dp < 0 ? `${fmtNum(dp)}%` : "0%";
     return `<div class="harmo-row"><span>${delta[s].rmn_label}</span><span class="v">${fmtNum(delta[s].roas_after)}x <span style="color:var(--text-tertiary);font-size:11px;">(${sign})</span></span></div>`;
   }).join("");
-  const punch = `En harmonisant les fenêtres d'attribution à ${data.target_window_days} jours, l'écart entre la régie la plus et la moins performante passe de ${fmtNum(data.roas_spread_before_pct)}% à ${fmtNum(data.roas_spread_after_pct)}%.`;
+  const punch = `Harmonizing attribution windows to ${data.target_window_days} days, the spread between the best- and worst-performing networks drops from ${fmtNum(data.roas_spread_before_pct)}% to ${fmtNum(data.roas_spread_after_pct)}%.`;
   return `
     <div class="harmo-compare">
       <div class="harmo-col">
-        <div class="harmo-col-head">Données déclarées</div>
+        <div class="harmo-col-head">Declared data</div>
         ${leftRows}
       </div>
       <div class="harmo-col">
-        <div class="harmo-col-head">Données harmonisées</div>
+        <div class="harmo-col-head">Harmonized data</div>
         ${rightRows}
       </div>
     </div>
@@ -1456,9 +1456,9 @@ function updateScopeHeader() {
   const totalP = (cat.products || []).length;
   const isFullProd = totalP > 0 && np === totalP;
   const prodLabel = isFullProd
-    ? `${np} produit${np > 1 ? "s" : ""} (tous)`
-    : `${np} produit${np > 1 ? "s" : ""} sélectionné${np > 1 ? "s" : ""}`;
-  const txt = `${ns} source${ns > 1 ? "s" : ""} · ${State.periodDays} jours · ${prodLabel}`;
+    ? `${np} product${np > 1 ? "s" : ""} (all)`
+    : `${np} product${np > 1 ? "s" : ""} selected`;
+  const txt = `${ns} source${ns > 1 ? "s" : ""} · ${State.periodDays} days · ${prodLabel}`;
   const t1 = document.getElementById("scope-text");
   const t2 = document.getElementById("scope-text-dash");
   if (t1) t1.textContent = txt;
@@ -1512,9 +1512,9 @@ function renderSelection() {
   const rmnsCount = cat.summary?.total_rmns ?? 3;
 
   document.getElementById("sel-prod-sub").textContent =
-    `${products.length} produit${products.length > 1 ? "s" : ""} détecté${products.length > 1 ? "s" : ""} sur ${rmnsCount} régie${rmnsCount > 1 ? "s" : ""}`;
+    `${products.length} product${products.length > 1 ? "s" : ""} detected across ${rmnsCount} network${rmnsCount > 1 ? "s" : ""}`;
   document.getElementById("sel-camp-sub").textContent =
-    `${campaigns.length} campagne${campaigns.length > 1 ? "s" : ""} sur ${rmnsCount} régie${rmnsCount > 1 ? "s" : ""}`;
+    `${campaigns.length} campaign${campaigns.length > 1 ? "s" : ""} across ${rmnsCount} network${rmnsCount > 1 ? "s" : ""}`;
 
   const selProd = new Set(State.selectedProducts);
   const prodHtml = products.map(p => {
@@ -1529,7 +1529,7 @@ function renderSelection() {
       <div class="sel-kpi">ROAS ${fmtNum(p.roas)}x<br>${fmtEur(p.total_spend)}</div>
     </div>`;
   }).join("");
-  document.getElementById("sel-prod-list").innerHTML = prodHtml || '<div style="color:var(--text-tertiary);font-size:13px">Aucun produit disponible.</div>';
+  document.getElementById("sel-prod-list").innerHTML = prodHtml || '<div style="color:var(--text-tertiary);font-size:13px">No product available.</div>';
 
   const selCamp = new Set(State.selectedCampaigns);
   const grouped = {};
@@ -1552,7 +1552,7 @@ function renderSelection() {
       </div>`;
     }).join("");
   }
-  document.getElementById("sel-camp-list").innerHTML = campHtml || '<div style="color:var(--text-tertiary);font-size:13px">Aucune campagne disponible.</div>';
+  document.getElementById("sel-camp-list").innerHTML = campHtml || '<div style="color:var(--text-tertiary);font-size:13px">No campaign available.</div>';
 
   // wire item clicks
   document.querySelectorAll("#act4 .sel-item").forEach(item => {
@@ -1606,17 +1606,17 @@ function updateSelectionSummary() {
   const sum = document.getElementById("sel-summary");
   const goBtn = document.getElementById("sel-go");
   if (sp === 0 && sc === 0) {
-    sum.textContent = "Aucune sélection active.";
+    sum.textContent = "No active selection.";
     goBtn.disabled = true;
-    goBtn.textContent = "Sélectionnez au moins un élément";
+    goBtn.textContent = "Select at least one item";
   } else {
     const parts = [];
-    if (sp) parts.push(`${sp} produit${sp > 1 ? "s" : ""}`);
-    if (sc) parts.push(`${sc} campagne${sc > 1 ? "s" : ""}`);
+    if (sp) parts.push(`${sp} product${sp > 1 ? "s" : ""}`);
+    if (sc) parts.push(`${sc} campaign${sc > 1 ? "s" : ""}`);
     const cov = Array.from(covered).map(rmnShort).join(", ") || "—";
-    sum.innerHTML = `${parts.join(" × ")} sélectionnés — couverture : ${cov}`;
+    sum.innerHTML = `${parts.join(" × ")} selected — coverage : ${cov}`;
     goBtn.disabled = false;
-    goBtn.textContent = "Analyser la sélection →";
+    goBtn.textContent = "Analyze selection →";
   }
   updateScopeHeader();
 }
@@ -1749,12 +1749,12 @@ document.querySelectorAll("#ask-suggestions button").forEach(b => {
       if (!slugs.length) return;
       const worst = slugs.reduce((a, c) => (trust[c].score < trust[a].score ? c : a), slugs[0]);
       const label = trust[worst].rmn_label || worst;
-      q = `Pourquoi le Trust Score de ${label} (${trust[worst].score}/100, grade ${trust[worst].grade}) est-il faible ? Détaille les composants les plus pénalisants.`;
+      q = `Why is ${label}'s Trust Score weak (${trust[worst].score}/100, grade ${trust[worst].grade})? Detail the most penalizing components.`;
     } else if (q === "__dyn_overlap__") {
       const dc = State.data.dc || {};
       const top = (dc.per_product || [])[0];
       if (!top) return;
-      q = `Combien de ventes sur-attribuées sur « ${top.product} » ? Chiffre l'overlap et ventile par régie.`;
+      q = `How many over-attributed sales on "${top.product}"? Quantify the overlap and break it down per network.`;
     }
     document.getElementById("ask-input").value = q;
     submitQuestion(q);

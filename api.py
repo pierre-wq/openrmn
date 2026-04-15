@@ -1,4 +1,4 @@
-"""openRMN — API FastAPI : analytics + OAuth Amazon + dashboard."""
+"""openRMN — FastAPI analytics API + OAuth Amazon + dashboard."""
 from __future__ import annotations
 
 import asyncio
@@ -104,7 +104,7 @@ app.add_middleware(
 )
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-# Cache par mode : "auto" | "mock" | "real"
+# Cache per mode : "auto" | "mock" | "real"
 _cache: Dict[str, Dict[str, Any]] = {
     m: {"df": None, "ts": 0.0, "days": 14} for m in ("auto", "mock", "real")
 }
@@ -179,7 +179,7 @@ def update_env_file(updates: Dict[str, str]) -> None:
     ENV_PATH.chmod(0o600)
 
 
-# ─── Routes statiques ──────────────────────────────────────────────────────
+# ─── Static routes ──────────────────────────────────────────────────────
 @app.get("/")
 def index():
     return FileResponse(
@@ -260,7 +260,7 @@ def _redirect_uri() -> str:
 def amazon_oauth_start():
     client_id = os.getenv("AMZ_LWA_CLIENT_ID")
     if not client_id:
-        raise HTTPException(500, "AMZ_LWA_CLIENT_ID n'est pas défini dans .env.")
+        raise HTTPException(500, "AMZ_LWA_CLIENT_ID is not set in .env.")
     state = secrets.token_urlsafe(24)
     _oauth_state[state] = time.time()
     # purge > 10 min
@@ -283,17 +283,17 @@ def amazon_oauth_start():
 def amazon_oauth_callback(code: str = "", state: str = "", error: str = "", error_description: str = ""):
     if error:
         return HTMLResponse(
-            f"<h2>❌ Amazon a refusé l'autorisation</h2><p>{error} : {error_description}</p>",
+            f"<h2>❌ Amazon denied the authorization</h2><p>{error} : {error_description}</p>",
             status_code=400,
         )
     if not code or state not in _oauth_state:
-        raise HTTPException(400, "State invalide ou code manquant (protection CSRF).")
+        raise HTTPException(400, "Invalid state or missing code (CSRF protection).")
     _oauth_state.pop(state, None)
 
     client_id = os.getenv("AMZ_LWA_CLIENT_ID")
     client_secret = os.getenv("AMZ_LWA_CLIENT_SECRET")
     if not (client_id and client_secret):
-        raise HTTPException(500, "AMZ_LWA_CLIENT_ID / AMZ_LWA_CLIENT_SECRET manquants.")
+        raise HTTPException(500, "AMZ_LWA_CLIENT_ID / AMZ_LWA_CLIENT_SECRET missing.")
 
     try:
         r = httpx.post(
@@ -310,7 +310,7 @@ def amazon_oauth_callback(code: str = "", state: str = "", error: str = "", erro
         r.raise_for_status()
     except httpx.HTTPError as e:
         log.exception("token exchange failed")
-        return HTMLResponse(f"<h2>❌ Échec de l'échange de token</h2><pre>{e}</pre>", status_code=502)
+        return HTMLResponse(f"<h2>❌ Token exchange failed</h2><pre>{e}</pre>", status_code=502)
 
     tok = r.json()
     access_token = tok["access_token"]
@@ -330,12 +330,12 @@ def amazon_oauth_callback(code: str = "", state: str = "", error: str = "", erro
         profiles = rp.json() or []
     except httpx.HTTPError as e:
         log.exception("profiles fetch failed")
-        return HTMLResponse(f"<h2>❌ Récupération des profils échouée</h2><pre>{e}</pre>", status_code=502)
+        return HTMLResponse(f"<h2>❌ Profile fetch failed</h2><pre>{e}</pre>", status_code=502)
 
     if not profiles:
         return HTMLResponse(
-            "<h2>⚠️ Refresh token obtenu mais aucun profil EU trouvé</h2>"
-            "<p>Vérifie que le compte Amazon Ads dispose d'au moins un compte EU.</p>",
+            "<h2>⚠️ Refresh token obtained but no EU profile found</h2>"
+            "<p>Check that the Amazon Ads account has at least one EU account.</p>",
             status_code=200,
         )
 
@@ -359,16 +359,16 @@ def amazon_oauth_callback(code: str = "", state: str = "", error: str = "", erro
     a{{color:#2563eb}}</style></head>
     <body>
     <div class=ok>
-      <h2 style='margin:0 0 8px'>✅ Amazon Ads connecté</h2>
-      <p style='margin:0'>Profil sélectionné : <code>{profile_id}</code> ({chosen.get('countryCode')} · {chosen.get('accountInfo', {}).get('name', '')})</p>
-      <p style='margin:8px 0 0;font-size:14px'>Refresh token enregistré dans <code>.env</code>. Vous pouvez fermer cette fenêtre.</p>
+      <h2 style='margin:0 0 8px'>✅ Amazon Ads connected</h2>
+      <p style='margin:0'>Selected profile : <code>{profile_id}</code> ({chosen.get('countryCode')} · {chosen.get('accountInfo', {}).get('name', '')})</p>
+      <p style='margin:8px 0 0;font-size:14px'>Refresh token saved in <code>.env</code>. You can close this window.</p>
     </div>
-    <p style='margin-top:20px'><a href='{ROOT_PATH or "/"}'>← Retour au dashboard</a></p>
+    <p style='margin-top:20px'><a href='{ROOT_PATH or "/"}'>← Back to dashboard</a></p>
     </body></html>
     """)
 
 
-# ─── Endpoints data (avec mode) ────────────────────────────────────────────
+# ─── Endpoints data (with mode) ────────────────────────────────────────────
 def _wrap_real(fn, mode: str):
     try:
         return fn()
@@ -380,7 +380,7 @@ def _wrap_real(fn, mode: str):
         if mode == "real":
             _last_real_fetch.update({"error": str(e), "at": datetime.now(timezone.utc).isoformat()})
         log.exception("fetch failed (mode=%s)", mode)
-        raise HTTPException(502, f"Échec du fetch {mode} : {e}")
+        raise HTTPException(502, f"Fetch failed for {mode} : {e}")
 
 
 def _split_csv(value: Optional[str]) -> list:
@@ -539,10 +539,10 @@ async def _stream_claude(request: Request, system: str, user_payload: str):
     try:
         import anthropic
     except ImportError as e:
-        yield {"event": "error", "data": json.dumps({"message": f"Librairie anthropic manquante : {e}"})}
+        yield {"event": "error", "data": json.dumps({"message": f"Missing anthropic library : {e}"})}
         return
     if not os.getenv("ANTHROPIC_API_KEY"):
-        yield {"event": "error", "data": json.dumps({"message": "ANTHROPIC_API_KEY non défini."})}
+        yield {"event": "error", "data": json.dumps({"message": "ANTHROPIC_API_KEY not set."})}
         return
     client = anthropic.Anthropic()
     try:
@@ -579,14 +579,14 @@ async def api_brief(
         try:
             df = get_df(mode=mode)
         except Exception as e:
-            yield {"event": "error", "data": json.dumps({"message": f"Échec du fetch {mode} : {e}"})}
+            yield {"event": "error", "data": json.dumps({"message": f"Fetch failed for {mode} : {e}"})}
             return
         df = apply_filters(df, prod_list, camp_list, src_list)
         if df.empty:
-            yield {"event": "error", "data": json.dumps({"message": f"Aucune donnée en mode {mode} pour la sélection — brief impossible."})}
+            yield {"event": "error", "data": json.dumps({"message": f"No data in mode {mode} for the selection — brief not possible."})}
             return
         system = PERSONA_PROMPTS.get(persona, PERSONA_PROMPTS["executive"])
-        payload = build_brief_payload(df, "Produis le brief.", products=prod_list, campaigns=camp_list)
+        payload = build_brief_payload(df, "Produce the brief.", products=prod_list, campaigns=camp_list)
         async for evt in _stream_claude(request, system, payload):
             yield evt
 
@@ -613,17 +613,17 @@ async def api_ask(request: Request):
     camp_list = [str(c).strip() for c in raw_campaigns if str(c).strip()]
     src_list = [str(s).strip() for s in raw_sources if str(s).strip()]
     if not question:
-        raise HTTPException(400, "Le champ 'question' est requis.")
+        raise HTTPException(400, "Field 'question' is required.")
 
     async def event_gen():
         try:
             df = get_df(mode=mode)
         except Exception as e:
-            yield {"event": "error", "data": json.dumps({"message": f"Échec du fetch {mode} : {e}"})}
+            yield {"event": "error", "data": json.dumps({"message": f"Fetch failed for {mode} : {e}"})}
             return
         df = apply_filters(df, prod_list, camp_list, src_list)
         payload = build_brief_payload(
-            df, f"### Question de l'utilisateur\n{question}\n\nRéponds.",
+            df, f"### User question\n{question}\n\nAnswer.",
             products=prod_list, campaigns=camp_list,
         )
         async for evt in _stream_claude(request, ASK_SYSTEM_PROMPT, payload):

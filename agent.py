@@ -129,7 +129,7 @@ def detect_anomalies(df: pd.DataFrame) -> List[Dict[str, Any]]:
                     "ratio": round(ratio, 2),
                     "severity": "high" if (ratio > 2.5 or ratio < 0.4) else "medium",
                     "message": (
-                        f"Écart de ROAS significatif sur « {product} » : "
+                        f"Significant ROAS gap on \"{product}\": "
                         f"{a} {float(ra):.2f} vs {b} {float(rb):.2f} (x{ratio:.2f})."
                     ),
                 })
@@ -151,8 +151,8 @@ def detect_anomalies(df: pd.DataFrame) -> List[Dict[str, Any]]:
                 "roas": round(float(r["roas"]), 2),
                 "severity": "high" if float(r["roas"]) < 1.0 else "medium",
                 "message": (
-                    f"Campagne « {r['campaign_name']} » ({r['rmn']}) : "
-                    f"ROAS {float(r['roas']):.2f} sur {float(r['spend_eur']):,.0f} EUR investis."
+                    f"Campaign \"{r['campaign_name']}\" ({r['rmn']}): "
+                    f"ROAS {float(r['roas']):.2f} on {float(r['spend_eur']):,.0f} EUR invested."
                 ),
             })
 
@@ -172,7 +172,7 @@ def apply_filters(
     campaigns: List[str] | None = None,
     sources: List[str] | None = None,
 ) -> pd.DataFrame:
-    """Filtre un DataFrame par sources (régies), produits et/ou campaign_id."""
+    """Filter a DataFrame by sources (networks), products and/or campaign_id."""
     if df.empty:
         return df
     out = df
@@ -252,7 +252,7 @@ def product_detail(df: pd.DataFrame, product: str) -> Dict[str, Any]:
     target = product.strip().lower()
     sub = df[df["product_name"].astype(str).str.strip().str.lower() == target]
     if sub.empty:
-        return {**empty, "error": "Produit introuvable sur la période courante."}
+        return {**empty, "error": "Product not found in the current period."}
 
     by_rmn: List[Dict[str, Any]] = []
     for rmn, g in sub.groupby("rmn"):
@@ -298,9 +298,9 @@ def product_detail(df: pd.DataFrame, product: str) -> Dict[str, Any]:
     over_ratio = round(total_attr / est_mid, 2) if est_mid else 0.0
     over_pct = int(round((over_ratio - 1) * 100)) if over_ratio > 1 else 0
     note = (
-        f"Les régies s'auto-attribuent collectivement {over_pct}% de plus que les "
-        f"ventes réelles estimées pour ce produit." if over_pct > 0 else
-        "Aucune sur-attribution détectée sur ce produit."
+        f"Networks collectively self-attribute {over_pct}% more than the estimated real "
+        f"sales for this product." if over_pct > 0 else
+        "No over-attribution detected on this product."
     )
 
     return {
@@ -319,7 +319,7 @@ def neutrality_audit(df: pd.DataFrame) -> Dict[str, Any]:
     if df.empty:
         return {"per_product": [], "shares_avg_pct": {}, "rmns": [],
                 "avg_amazon_share_pct": None,
-                "comment": "Aucune donnée disponible pour l'audit."}
+                "comment": "No data available for the audit."}
     by_prod_rmn = (
         df.groupby(["product_name", "rmn"])[["sales_eur", "units_sold"]]
         .sum()
@@ -362,9 +362,9 @@ def neutrality_audit(df: pd.DataFrame) -> Dict[str, Any]:
             next((r for r in rmns if "Amazon" in r), ""), None
         ),
         "comment": (
-            "Part des ventes que chaque régie s'auto-attribue sur les SKU communs. "
-            "La somme des parts dépasse 100% du chiffre d'affaires réel : "
-            "la sur-attribution cumulée mesure le biais walled-garden."
+            "Share of sales each network self-attributes on common SKUs. "
+            "The sum of shares exceeds 100% of real revenue: "
+            "cumulative over-attribution measures the walled-garden bias."
         ),
     }
 
@@ -464,23 +464,23 @@ def trust_score(df: pd.DataFrame) -> Dict[str, Any]:
         if meth:
             win = meth.get("attribution_window_days")
             typ = meth.get("attribution_type", "—")
-            findings.append(f"Méthodologie d'attribution {typ} sur {win} jours"
-                            + (" (MRC certifié)" if meth.get("mrc_certified") else ""))
+            findings.append(f"Attribution methodology: {typ}, {win}-day window"
+                            + (" (MRC certified)" if meth.get("mrc_certified") else ""))
         if conv_score < 55:
             findings.append(
-                f"Sur- ou sous-attribution probable sur les SKU communs "
+                f"Probable over- or under-attribution on common SKUs "
                 f"(convergence {conv_score:.0f}/100)."
             )
         elif conv_score > 80:
-            findings.append(f"Part cohérente sur les SKU communs (convergence {conv_score:.0f}/100).")
+            findings.append(f"Consistent share on common SKUs (convergence {conv_score:.0f}/100).")
         if freshness_score >= 85:
-            findings.append("Données fraîches (lag <24h).")
+            findings.append("Fresh data (lag <24h).")
         elif freshness_score <= 30:
-            findings.append("Données potentiellement obsolètes (>5 jours).")
+            findings.append("Data possibly stale (>5 days).")
         if ic_score < 50:
-            findings.append(f"ROAS quotidien très volatile (consistance {ic_score:.0f}/100).")
+            findings.append(f"Daily ROAS highly volatile (consistency {ic_score:.0f}/100).")
         if not findings:
-            findings.append("Aucun signal d'alerte fort.")
+            findings.append("No strong alert signal.")
 
         out[slug] = {
             "rmn_label": rmn,
@@ -489,24 +489,24 @@ def trust_score(df: pd.DataFrame) -> Dict[str, Any]:
             "components": {
                 "internal_consistency": {
                     "score": int(round(ic_score)), "weight": weights["internal_consistency"],
-                    "explanation": ("Variance du ROAS quotidien sur la période. "
-                                    "Faible variance = score élevé."),
+                    "explanation": ("Variance of daily ROAS over the period. "
+                                    "Low variance = high score."),
                 },
                 "cross_network_convergence": {
                     "score": int(round(conv_score)), "weight": weights["cross_network_convergence"],
-                    "explanation": ("Écart de la part de ventes attribuées vs part équitable "
-                                    "sur les SKU communs. Une régie qui attribue beaucoup plus "
-                                    "que les autres a une convergence faible."),
+                    "explanation": ("Gap between the network's share of attributed sales and the "
+                                    "fair share on common SKUs. A network that attributes much "
+                                    "more than peers has low convergence."),
                 },
                 "methodology_transparency": {
                     "score": int(round(mt_score)), "weight": weights["methodology_transparency"],
-                    "explanation": ("Fenêtre d'attribution publiée, type d'attribution documenté, "
-                                    "certification MRC."),
+                    "explanation": ("Published attribution window, documented attribution type, "
+                                    "MRC certification."),
                 },
                 "data_freshness": {
                     "score": int(round(freshness_score)), "weight": weights["data_freshness"],
-                    "explanation": ("Délai entre la mesure et l'ingestion via API. "
-                                    "Plus c'est frais, mieux c'est."),
+                    "explanation": ("Delay between measurement and API ingestion. "
+                                    "The fresher the better."),
                 },
             },
             "key_findings": findings[:4],
@@ -533,7 +533,7 @@ def simulate_harmonization(
             "before": compute_kpis(df), "after": compute_kpis(df),
             "delta_per_network": {}, "target_window_days": target_window_days,
             "target_type": target_type,
-            "assumptions": "Coefficient de dé-duplication = sqrt(target_window / actual_window).",
+            "assumptions": "Deduplication coefficient = sqrt(target_window / actual_window).",
         }
 
     before_kpis = compute_kpis(df)
@@ -583,7 +583,7 @@ def simulate_harmonization(
         "target_type": target_type,
         "roas_spread_before_pct": round(spread_before, 1),
         "roas_spread_after_pct": round(spread_after, 1),
-        "assumptions": "Coefficient de dé-duplication = sqrt(target_window / actual_window).",
+        "assumptions": "Deduplication coefficient = sqrt(target_window / actual_window).",
     }
 
 
@@ -596,7 +596,7 @@ def double_counting_audit(df: pd.DataFrame) -> Dict[str, Any]:
         return {
             "total_attributed": 0.0, "estimated_real": 0.0, "overlap_amount": 0.0,
             "overlap_pct": 0.0, "per_product": [], "per_network": [], "flows": [],
-            "note": "Méthodologie : ventes réelles estimées = max(ventes par régie) × 1.1.",
+            "note": "Methodology: estimated real sales = max(sales per network) × 1.1.",
         }
 
     by_prod_rmn = (
@@ -675,80 +675,77 @@ def double_counting_audit(df: pd.DataFrame) -> Dict[str, Any]:
         "per_product": per_product,
         "per_network": per_network,
         "flows": flows,
-        "note": ("Méthodologie : ventes réelles estimées = max(ventes par régie) × 1.1 "
-                 "sur SKU communs. Hypothèse défendable mais à valider avec des données "
-                 "panel tierces (Wakoopa, Nielsen, Kantar Worldpanel)."),
+        "note": ("Methodology: estimated real sales = max(sales per network) × 1.1 on "
+                 "common SKUs. Defensible assumption — to be validated with third-party "
+                 "panel data (Wakoopa, Nielsen, Kantar Worldpanel)."),
     }
 
 
 PERSONA_PROMPTS: Dict[str, str] = {
-    "executive": """Tu es un conseiller stratégique média qui s'adresse à un CMO.
-Ton brief doit être lisible en 2 minutes. Focus sur les enjeux budgétaires
-à 30 jours, les arbitrages cross-régie, et l'impact business. Pas de jargon
-technique. Chiffre chaque recommandation avec un ordre de grandeur d'impact.
+    "executive": """You are a strategic media advisor speaking to a CMO.
+Your brief must be readable in 2 minutes. Focus on 30-day budget stakes,
+cross-network arbitrages, and business impact. No technical jargon. Quantify
+each recommendation with a magnitude of impact.
 
-Structure markdown stricte :
+Strict markdown structure:
 
 ## Situation
 
-## Risques
+## Risks
 
-## Décisions à prendre
+## Decisions to make
 
-Français professionnel, direct. Pas de préambule, pas de conclusion.""",
+Professional English, direct. No preamble, no conclusion.""",
 
-    "operational": """Tu es un trader retail media senior. Ton brief s'adresse
-à l'équipe opérationnelle. Recommandations actionnables semaine par semaine :
-ajustements de bids, dayparting, mots-clés négatifs, réallocation par retailer.
-Chaque action doit avoir un impact estimé et une priorité (P0/P1/P2).
+    "operational": """You are a senior retail media trader. Your brief is for
+the operational team. Actionable recommendations week by week: bid adjustments,
+dayparting, negative keywords, reallocation by retailer. Each action must
+have an estimated impact and a priority (P0/P1/P2).
 
-Structure markdown stricte :
+Strict markdown structure:
 
-## Performance cette semaine
+## Performance this week
 
-## Actions immédiates
+## Immediate actions
 
-## Tests à lancer
+## Tests to launch
 
-Français, ton trader (concis, chiffré). Pas de préambule, pas de conclusion.""",
+English, trader tone (concise, quantified). No preamble, no conclusion.""",
 
-    "neutrality": """Tu es un auditeur indépendant de la mesure publicitaire.
-Ton rôle est de confronter les chiffres déclarés par chaque régie retail media.
-Analyse les écarts d'attribution entre Amazon, Criteo et Unlimitail sur les
-SKU communs. Questionne les méthodologies (fenêtres d'attribution, last-click
-vs assisted). Propose un coefficient de pondération pour estimer les ventes
-réelles dé-dupliquées.
+    "neutrality": """You are an independent auditor of advertising measurement.
+Your role is to challenge the numbers declared by each retail media network.
+Analyze attribution gaps between Amazon, Criteo and Unlimitail on common SKUs.
+Question methodologies (attribution windows, last-click vs assisted). Propose
+a weighting coefficient to estimate deduplicated real sales.
 
-Utilise les Trust Scores fournis et les chiffres du double-counting audit
-pour étayer ton rapport. Cite nommément les composants des Trust Scores qui
-pèsent le plus dans tes constats (internal_consistency, cross_network_convergence,
-methodology_transparency, data_freshness) et appuie-toi sur le montant de
-sur-attribution (overlap_amount) et le pourcentage global (overlap_pct) pour
-chiffrer tes conclusions.
+Use the provided Trust Scores and double-counting audit figures to substantiate
+your report. Name the Trust Score components (internal_consistency,
+cross_network_convergence, methodology_transparency, data_freshness) that weigh
+most in your findings, and rely on the over-attribution amount (overlap_amount)
+and global percentage (overlap_pct) to quantify conclusions.
 
-Ton de rapport d'audit factuel et prudent. Structure markdown libre mais doit
-inclure :
+Factual, cautious audit tone. Free markdown structure but must include:
 
-## Constats d'attribution
+## Attribution findings
 
-## Hypothèses méthodologiques
+## Methodological hypotheses
 
-## Coefficient de pondération proposé
+## Proposed weighting coefficient
 
-Français formel, sans concession, pas de préambule.""",
+Formal English, uncompromising, no preamble.""",
 }
 
 SYSTEM_PROMPT = PERSONA_PROMPTS["executive"]
 
-ASK_SYSTEM_PROMPT = """Tu es un analyste retail media expérimenté. L'utilisateur
-te pose une question libre sur ses campagnes (Amazon Ads, Criteo Retail Media,
-Unlimitail). Tu as accès aux KPIs agrégés, anomalies détectées et à l'audit
-de neutralité — utilise-les comme source factuelle.
+ASK_SYSTEM_PROMPT = """You are an experienced retail media analyst. The user
+asks you free-form questions about their campaigns (Amazon Ads, Criteo Retail
+Media, Unlimitail). You have access to aggregated KPIs, detected anomalies and
+the neutrality audit — use them as factual source.
 
-Réponds en français, concis (max 250 mots sauf si la question demande une
-réponse détaillée). Chiffre tes affirmations avec les données fournies. Si la
-question dépasse les données disponibles, dis-le honnêtement et suggère ce
-qu'il faudrait pour y répondre. Pas de préambule, pas de disclaimer."""
+Answer in English, concise (max 250 words unless the question requires a
+detailed response). Quantify your claims with the provided data. If the question
+exceeds the available data, say so honestly and suggest what would be needed to
+answer it. No preamble, no disclaimer."""
 
 
 def build_brief_payload(
@@ -780,20 +777,20 @@ def build_brief_payload(
     }
     scope_lines = []
     if products:
-        scope_lines.append(f"Produits dans le périmètre ({len(products)}) : {', '.join(products)}")
+        scope_lines.append(f"Products in scope ({len(products)}): {', '.join(products)}")
     if campaigns:
-        scope_lines.append(f"Campagnes dans le périmètre ({len(campaigns)}) : {', '.join(campaigns)}")
+        scope_lines.append(f"Campaigns in scope ({len(campaigns)}): {', '.join(campaigns)}")
     if not scope_lines:
-        scope_lines.append("Périmètre : portefeuille complet (aucun filtre).")
-    scope_block = "### Périmètre de la sélection\n" + "\n".join(scope_lines) + "\n\n"
+        scope_lines.append("Scope: full portfolio (no filter).")
+    scope_block = "### Selection scope\n" + "\n".join(scope_lines) + "\n\n"
     base = (
-        "Données consolidées sur les 14 derniers jours pour l'annonceur "
-        "\"Maison Café & Thé\" (4 SKU principaux, 3 régies retail media).\n\n"
+        "Consolidated data over the last 14 days for the advertiser "
+        "\"Maison Café & Thé\" (4 main SKUs, 3 retail media networks).\n\n"
         f"{scope_block}"
-        f"### KPIs agrégés\n{kpis}\n\n"
-        f"### Anomalies détectées automatiquement\n{anomalies}\n\n"
-        f"### Audit de neutralité (sur SKU communs cross-régie)\n{audit}\n\n"
-        f"### Trust Score par régie\n{trust_brief}\n\n"
+        f"### Aggregated KPIs\n{kpis}\n\n"
+        f"### Automatically detected anomalies\n{anomalies}\n\n"
+        f"### Neutrality audit (on cross-network common SKUs)\n{audit}\n\n"
+        f"### Trust Score per network\n{trust_brief}\n\n"
         f"### Double-counting audit\n{dbl_brief}\n"
     )
     return base + (f"\n{extra}" if extra else "")
@@ -802,7 +799,7 @@ def build_brief_payload(
 def run_agent(df: pd.DataFrame, persona: str = "executive") -> str:
     import anthropic
     system = PERSONA_PROMPTS.get(persona, PERSONA_PROMPTS["executive"])
-    user_payload = build_brief_payload(df, "Produis le brief.")
+    user_payload = build_brief_payload(df, "Produce the brief.")
     client = anthropic.Anthropic()
     resp = client.messages.create(
         model="claude-sonnet-4-5",
