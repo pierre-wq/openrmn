@@ -4,3 +4,4 @@ fastapi
 uvicorn[standard]
 sse-starlette
 httpx
+mcp>=1.0.0

@@ -18,7 +18,7 @@ arbitrator to reconcile them. In Skai's 2026 state-of-retail-media survey,
 openRMN is the third-party layer that consolidates, normalizes and audits
 those self-reported figures so the buyer — not the seller — owns the truth.
 
-## Features (v0.5)
+## Features (v0.7)
 
 - Multi-RMN connectors : Amazon Ads (real + mock), Criteo Retail Media (mock), Unlimitail (mock)
 - Unified schema (`UnifiedRow`) cross-RMN
@@ -28,6 +28,7 @@ those self-reported figures so the buyer — not the seller — owns the truth.
 - **Harmonization simulator** — "what if all networks used the same methodology?"
 - **Double-counting audit** — estimate cross-network over-attribution with a pure-SVG Sankey
 - AI agent (Claude Sonnet 4.5) with 3 personas : Executive / Operational / Auditor
+- **MCP server** — expose all analytics as tools for Claude Desktop, Claude Code, Cursor, any MCP-compatible AI agent
 - Free-form Q&A on your data
 - Web dashboard : narrative 4-act experience, Mock/Real toggle, OAuth Amazon
 - Per-product drill-down with cross-network attribution comparison
@@ -216,6 +217,74 @@ curl -N -X POST https://lab.holco.co/retail-audience/api/ask \
   -H 'Content-Type: application/json' \
   -d '{"question":"Pourquoi Criteo sur-attribue sur les capsules ?","mode":"mock"}'
 ```
+
+## MCP Server (for AI agents)
+
+openRMN exposes its analytics layer as a Model Context Protocol (MCP) 
+server. Any MCP-compatible AI agent — Claude Desktop, Claude Code, Cursor, 
+custom agents — can query retail media metrics in natural language.
+
+### Use from Claude Desktop
+
+Add to your `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "openrmn": {
+      "command": "python",
+      "args": ["/absolute/path/to/openrmn/mcp_server.py"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. You can now ask questions like:
+
+- "What's my unified ROAS across Amazon, Criteo and Unlimitail?"
+- "Which product has the highest over-attribution?"
+- "Show me the Trust Score for each network and explain the weakest one."
+- "Simulate harmonizing everything to 30-day attribution."
+
+### Available tools
+
+| Tool | Purpose |
+|------|---------|
+| `get_kpis` | Unified ROAS and per-network breakdown |
+| `get_anomalies` | Cannibalization and underperformance detection |
+| `get_trust_score` | 0-100 scoring per network, 4 components |
+| `get_double_counting_audit` | Over-attribution estimation |
+| `simulate_harmonization` | What-if attribution alignment |
+| `get_neutrality_audit` | Per-product attribution share comparison |
+| `get_methodology_comparison` | Side-by-side methodology table |
+
+### Use from Python (programmatic)
+
+```python
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+async with stdio_client(StdioServerParameters(
+    command="python",
+    args=["mcp_server.py"],
+)) as (read, write):
+    async with ClientSession(read, write) as session:
+        await session.initialize()
+        result = await session.call_tool("get_trust_score", {"days": 14})
+        print(result.content[0].text)
+```
+
+### Alignment with AdCP
+
+The openRMN MCP server is designed to be composable with emerging standards 
+like the [Ad Context Protocol (AdCP)](https://adcontextprotocol.org). 
+The current `get_media_buy_delivery` concept in AdCP's Media Buy Protocol 
+is the closest analog — openRMN provides the independent, cross-network 
+audit layer that `get_media_buy_delivery` on its own does not cover.
+
+We're actively following AdCP development and are open to contributing 
+a Measurement extension. Join the conversation in our 
+[GitHub discussions](https://github.com/pierre-wq/openrmn/discussions).
 
 ## Roadmap
 

@@ -480,6 +480,29 @@ class UnifiedRow:
   </section>
 
   <section>
+    <h2 id="mcp">MCP server — talk to openRMN from any AI agent</h2>
+
+    <p>openRMN exposes its deterministic analytics layer as a <strong>Model Context Protocol (MCP) server</strong>. Any MCP-compatible AI agent — Claude Desktop, Claude Code, Cursor, custom agents — can query retail media metrics in natural language, without writing a line of code.</p>
+
+    <p>This is what makes openRMN composable. The analytics layer is no longer locked inside a dashboard: it's a tool any agent can call, anywhere in your stack.</p>
+
+    <h3>Example interaction (Claude Desktop)</h3>
+
+    <div class="callout">
+      <p><strong>User</strong>: "My Q2 retail media dashboard shows 458k in attributed sales. My CFO doesn't trust that number. Can you give me a cleaner estimate?"</p>
+      <p><strong>Claude</strong> (calling openRMN via MCP): "Running the double-counting audit... your networks report 458k combined, but the de-duplicated estimate is 320k — meaning 138k (43%) is probably over-attributed noise. The biggest overlap is on 'Cafetiere Italienne Inox 6 tasses' where both Amazon and Criteo claim nearly-identical sales volumes."</p>
+    </div>
+
+    <p>The numbers Claude quotes come from openRMN's Python layer, not the model's imagination. Full technical setup in the <a href="https://github.com/pierre-wq/openrmn">GitHub repository</a>.</p>
+
+    <h3>Why this matters strategically</h3>
+
+    <p>The advertising industry is moving toward <strong>agentic execution</strong> (see <a href="https://adcontextprotocol.org" target="_blank" rel="noopener">AdCP</a> — the emerging Ad Context Protocol). In that future, multiple AI agents coordinate: one plans, one buys, one creates assets. openRMN positions itself as the <strong>measurement and audit agent</strong> — the one that tells the others "that number you're optimizing against is 43% over-attributed."</p>
+
+    <p>Being MCP-native today means openRMN is ready for the agentic advertising stack that every serious industry observer expects to emerge in the next 18-24 months.</p>
+  </section>
+
+  <section>
     <h2 id="privacy">Privacy by design &amp; deployment options</h2>
 
     <p>Retail media data is sensitive. Campaign budgets, attributed sales, product margins, customer acquisition costs — this is information your CFO would not want competitors, ad networks, or even your own SaaS vendors to see in aggregate. openRMN is designed around this constraint from day one.</p>
@@ -698,13 +721,14 @@ class UnifiedRow:
     <li><a href="#aggregation">7. Per-product aggregation</a></li>
     <li><a href="#analytics">8. KPIs, anomalies, trust</a></li>
     <li><a href="#ai-agent">9. The AI agent</a></li>
-    <li><a href="#privacy">10. Privacy &amp; deployment</a></li>
-    <li><a href="#end-result">11. What the advertiser sees</a></li>
-    <li><a href="#scope">12. What openRMN is not</a></li>
-    <li><a href="#comparison">13. How we compare</a></li>
-    <li><a href="#onboarding">14. Onboarding timeline</a></li>
-    <li><a href="#faq">15. FAQ</a></li>
-    <li><a href="#cta">16. Get started</a></li>
+    <li><a href="#mcp">10. MCP server</a></li>
+    <li><a href="#privacy">11. Privacy &amp; deployment</a></li>
+    <li><a href="#end-result">12. What the advertiser sees</a></li>
+    <li><a href="#scope">13. What openRMN is not</a></li>
+    <li><a href="#comparison">14. How we compare</a></li>
+    <li><a href="#onboarding">15. Onboarding timeline</a></li>
+    <li><a href="#faq">16. FAQ</a></li>
+    <li><a href="#cta">17. Get started</a></li>
   </ol>
 </aside>
 
