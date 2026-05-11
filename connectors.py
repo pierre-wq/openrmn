@@ -1,4 +1,4 @@
-"""openRMN connectors — unifie les données Retail Media multi-régies."""
+"""openRMN connectors — unify retail media data across multiple networks."""
 from __future__ import annotations
 
 import gzip

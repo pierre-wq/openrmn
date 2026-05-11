@@ -170,52 +170,52 @@ Most also accept optional `products=a,b,c` and `campaigns=id1,id2` filters.
 # Health
 curl https://lab.holco.co/retail-audience/api/health
 
-# Consolidated KPIs (ROAS unifié, spend, sales, breakdown par régie)
+# Consolidated KPIs (unified ROAS, spend, sales, per-network breakdown)
 curl "https://lab.holco.co/retail-audience/api/kpis?mode=mock"
 
-# Anomalies détectées automatiquement
+# Auto-detected anomalies
 curl "https://lab.holco.co/retail-audience/api/anomalies?mode=mock"
 
-# Audit de neutralité (parts d'attribution par régie sur SKU communs)
+# Neutrality audit (per-network attribution share on shared SKUs)
 curl "https://lab.holco.co/retail-audience/api/audit?mode=mock"
 
-# Trust Score par régie (composants + grade + key_findings)
+# Trust Score per network (components + grade + key_findings)
 curl "https://lab.holco.co/retail-audience/api/trust-score?mode=mock"
 
-# Méthodologies déclarées par les régies
+# Network-declared methodologies
 curl "https://lab.holco.co/retail-audience/api/methodology-comparison"
 
-# Simulateur d'harmonisation (what-if sur fenêtre d'attribution)
+# Harmonization simulator (what-if on attribution window)
 curl "https://lab.holco.co/retail-audience/api/harmonization-simulator?window=7&type=last-click&mode=mock"
 
-# Audit du double-comptage (flux Sankey)
+# Double-counting audit (Sankey flow)
 curl "https://lab.holco.co/retail-audience/api/double-counting?mode=mock"
 
-# Catalogue (produits + campagnes pour la sélection)
+# Catalog (products + campaigns for selection)
 curl "https://lab.holco.co/retail-audience/api/catalog?mode=mock"
 
-# Drill-down par produit
+# Per-product drill-down
 curl "https://lab.holco.co/retail-audience/api/product-detail?product=Capsules%20Origine%20Colombie&mode=mock"
 
-# Raw UnifiedRows (14 jours par défaut, cap 90)
+# Raw UnifiedRows (14 days default, cap 90)
 curl "https://lab.holco.co/retail-audience/api/raw?mode=mock&days=14"
 
-# Série journalière ROAS par régie
+# Daily ROAS time series per network
 curl "https://lab.holco.co/retail-audience/api/daily?mode=mock"
 
-# État des connecteurs (mode_available par RMN)
+# Connector status (mode_available per RMN)
 curl "https://lab.holco.co/retail-audience/api/sources/status"
 
-# Invalider le cache (force refetch)
+# Invalidate cache (force refetch)
 curl -X POST "https://lab.holco.co/retail-audience/api/refresh?mode=real"
 
-# Brief IA streamé (SSE, persona ∈ {executive, operational, neutrality})
+# AI brief, streamed (SSE, persona ∈ {executive, operational, neutrality})
 curl -N -X POST "https://lab.holco.co/retail-audience/api/brief?persona=executive&mode=mock"
 
-# Q&A libre streamé (SSE)
+# Free-form Q&A, streamed (SSE)
 curl -N -X POST https://lab.holco.co/retail-audience/api/ask \
   -H 'Content-Type: application/json' \
-  -d '{"question":"Pourquoi Criteo sur-attribue sur les capsules ?","mode":"mock"}'
+  -d '{"question":"Why is Criteo over-attributing on the capsules?","mode":"mock"}'
 ```
 
 ## MCP Server (for AI agents)
@@ -284,7 +284,7 @@ audit layer that `get_media_buy_delivery` on its own does not cover.
 
 We're actively following AdCP development and are open to contributing 
 a Measurement extension. Join the conversation in our 
-[GitHub discussions](https://github.com/pierre-wq/openrmn/discussions).
+[GitHub discussions](https://github.com/holco-apps/openrmn/discussions).
 
 ## Roadmap
 
