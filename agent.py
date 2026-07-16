@@ -51,6 +51,48 @@ METHODOLOGY_TRANSPARENCY_SCORES: Dict[str, int] = {
     "unlimitail": 60,
 }
 
+# +10% for physical sales influenced by an ad without a logged interaction.
+DEFAULT_ORGANIC_UPLIFT = 0.10
+
+_DBL_NOTE = (
+    "Real deduplicated sales are bounded: max(sales per network) <= real <= "
+    "sum(sales per network). The point estimate is max * (1 + organic_uplift) "
+    "on SKUs advertised on >= 2 networks. This is an explicit, auditable "
+    "assumption, not a measurement. Ground truth requires third-party panel "
+    "data (Wakoopa, NielsenIQ, Kantar Worldpanel)."
+)
+
+
+def _estimate_real_sales(
+    sales_values: List[float], organic_uplift: float = DEFAULT_ORGANIC_UPLIFT
+) -> Dict[str, float]:
+    """Bound the real deduplicated sales behind several networks' self-attribution.
+
+    When N networks each attribute sales on the same SKU, the true number of
+    physical sales is unknown but bounded:
+      - lower bound (max overlap)  = max(sales)  — peers fully double-count the leader
+      - upper bound (zero overlap) = sum(sales)  — every attribution is incremental
+    The point estimate sits near the lower bound, max * (1 + organic_uplift),
+    clamped inside [max, sum]. Shared by every over-attribution figure so the
+    numbers reconcile across endpoints. This is an assumption, not a measurement.
+    """
+    vals = [float(v) for v in sales_values if v and float(v) > 0]
+    total = float(sum(vals))
+    if not vals or total <= 0:
+        return {"total": 0.0, "point": 0.0, "low": 0.0, "high": 0.0,
+                "overlap": 0.0, "overlap_max": 0.0}
+    mx = max(vals)
+    low, high = mx, total  # real sales cannot be below the leader nor above the sum
+    point = min(max(mx * (1.0 + organic_uplift), low), high)
+    return {
+        "total": total,
+        "point": point,
+        "low": low,
+        "high": high,
+        "overlap": max(0.0, total - point),      # point over-attribution
+        "overlap_max": max(0.0, total - low),    # worst-case over-attribution
+    }
+
 
 def compute_kpis(df: pd.DataFrame) -> Dict[str, Any]:
     if df.empty:
@@ -290,12 +332,9 @@ def product_detail(df: pd.DataFrame, product: str) -> Dict[str, Any]:
             "daily": daily,
         })
 
-    total_attr = sum(r["sales"] for r in by_rmn)
-    max_rmn_sales = max((r["sales"] for r in by_rmn), default=0.0)
-    est_low = round(max_rmn_sales * 0.85, 2)
-    est_high = round(max_rmn_sales * 1.05, 2)
-    est_mid = (est_low + est_high) / 2 if (est_low + est_high) else 0.0
-    over_ratio = round(total_attr / est_mid, 2) if est_mid else 0.0
+    est = _estimate_real_sales([r["sales"] for r in by_rmn])
+    total_attr = est["total"]
+    over_ratio = round(total_attr / est["point"], 2) if est["point"] else 0.0
     over_pct = int(round((over_ratio - 1) * 100)) if over_ratio > 1 else 0
     note = (
         f"Networks collectively self-attribute {over_pct}% more than the estimated real "
@@ -308,7 +347,8 @@ def product_detail(df: pd.DataFrame, product: str) -> Dict[str, Any]:
         "by_rmn": by_rmn,
         "neutrality": {
             "total_attributed_sales": round(total_attr, 2),
-            "estimated_real_sales_range": [est_low, est_high],
+            "estimated_real_sales": round(est["point"], 2),
+            "estimated_real_sales_range": [round(est["low"], 2), round(est["high"], 2)],
             "over_attribution_ratio": over_ratio,
             "note": note,
         },
@@ -389,7 +429,7 @@ def trust_score(df: pd.DataFrame) -> Dict[str, Any]:
     """Compute a 0-100 trust score per network.
     Components (weighted):
       - internal_consistency 30%  : 100 - CV_ROAS_daily*100
-      - cross_network_convergence 25%: 1 - |share - 1/N| on common SKUs
+      - cross_network_convergence 25%: sales-share vs click-share on common SKUs
       - methodology_transparency 25% : static public-knowledge score
       - data_freshness 20%        : 100 if <24h, linear to 0 at 7d+
     """
@@ -398,12 +438,11 @@ def trust_score(df: pd.DataFrame) -> Dict[str, Any]:
         return out
 
     today = pd.Timestamp(datetime.now(timezone.utc).date())
-    total_by_sku_rmn = (
-        df.groupby(["product_name", "rmn"])["sales_eur"].sum().reset_index()
+    grp = (
+        df.groupby(["product_name", "rmn"])[["sales_eur", "clicks"]].sum().reset_index()
     )
-    pivot = total_by_sku_rmn.pivot(
-        index="product_name", columns="rmn", values="sales_eur"
-    ).fillna(0)
+    pivot = grp.pivot(index="product_name", columns="rmn", values="sales_eur").fillna(0)
+    clicks_pivot = grp.pivot(index="product_name", columns="rmn", values="clicks").fillna(0)
     rmns_present = list(pivot.columns)
     n_rmns = len(rmns_present) if rmns_present else 1
 
@@ -421,19 +460,28 @@ def trust_score(df: pd.DataFrame) -> Dict[str, Any]:
         else:
             ic_score = 60.0
 
+        # Convergence: does this network's SHARE of attributed sales match its
+        # SHARE of clicks (a proxy for real exposure) on SKUs it shares with
+        # peers? A network claiming far more sales-share than click-share is the
+        # signature of over-attribution. Benchmarking against click-share, not an
+        # arbitrary 1/N "fair share", avoids penalising a network that genuinely
+        # performs better than its peers.
         conv_num, conv_den = 0.0, 0.0
         for sku in pivot.index:
-            row = pivot.loc[sku]
-            total = float(row.sum())
-            if total <= 0 or rmn not in row.index:
+            srow = pivot.loc[sku]
+            crow = clicks_pivot.loc[sku]
+            s_total = float(srow.sum())
+            c_total = float(crow.sum())
+            if s_total <= 0 or c_total <= 0 or rmn not in srow.index:
                 continue
-            share = float(row[rmn]) / total
-            ideal = 1.0 / n_rmns
-            # proximity to fair share (1-|share-ideal|/ideal clamped) then scale 0-100
-            prox = 1.0 - min(1.0, abs(share - ideal) / max(ideal, 1e-9))
-            conv_num += prox * total
-            conv_den += total
-        conv_score = _safe_clamp((conv_num / conv_den) * 100.0 if conv_den > 0 else 50.0)
+            if int((srow > 0).sum()) < 2:  # only meaningful on shared SKUs
+                continue
+            sales_share = float(srow[rmn]) / s_total
+            clicks_share = float(crow[rmn]) / c_total
+            prox = 1.0 - min(1.0, abs(sales_share - clicks_share))
+            conv_num += prox * s_total
+            conv_den += s_total
+        conv_score = _safe_clamp((conv_num / conv_den) * 100.0 if conv_den > 0 else 60.0)
 
         mt_score = float(METHODOLOGY_TRANSPARENCY_SCORES.get(slug, 50))
 
@@ -494,9 +542,10 @@ def trust_score(df: pd.DataFrame) -> Dict[str, Any]:
                 },
                 "cross_network_convergence": {
                     "score": int(round(conv_score)), "weight": weights["cross_network_convergence"],
-                    "explanation": ("Gap between the network's share of attributed sales and the "
-                                    "fair share on common SKUs. A network that attributes much "
-                                    "more than peers has low convergence."),
+                    "explanation": ("Gap between the network's share of attributed sales and its "
+                                    "share of clicks (proxy for real exposure) on common SKUs. "
+                                    "A network claiming far more sales-share than click-share "
+                                    "scores low."),
                 },
                 "methodology_transparency": {
                     "score": int(round(mt_score)), "weight": weights["methodology_transparency"],
@@ -587,17 +636,27 @@ def simulate_harmonization(
     }
 
 
-def double_counting_audit(df: pd.DataFrame) -> Dict[str, Any]:
-    """Estimate cross-network over-attribution.
-    Rule: real_sales = max(sales_per_rmn) * 1.1, overlap = total_attributed - real.
-    Per-network allocation is proportional: real_rmn = sales_rmn * (real / total).
+def double_counting_audit(
+    df: pd.DataFrame, organic_uplift: float = DEFAULT_ORGANIC_UPLIFT
+) -> Dict[str, Any]:
+    """Bound cross-network over-attribution on commonly-advertised SKUs.
+
+    Per SKU, real deduplicated sales are bounded by
+    max(sales_per_rmn) <= real <= sum(sales_per_rmn). We report both bounds and
+    a point estimate (max * (1 + organic_uplift)), all via `_estimate_real_sales`
+    so every over-attribution figure reconciles. Per-network allocation is
+    proportional: real_rmn = sales_rmn * (total_real / total_attributed).
     """
+    empty = {
+        "total_attributed": 0.0, "estimated_real": 0.0,
+        "estimated_real_low": 0.0, "estimated_real_high": 0.0,
+        "overlap_amount": 0.0, "overlap_amount_max": 0.0,
+        "overlap_pct": 0.0, "overlap_pct_max": 0.0,
+        "organic_uplift": organic_uplift,
+        "per_product": [], "per_network": [], "flows": [], "note": _DBL_NOTE,
+    }
     if df.empty:
-        return {
-            "total_attributed": 0.0, "estimated_real": 0.0, "overlap_amount": 0.0,
-            "overlap_pct": 0.0, "per_product": [], "per_network": [], "flows": [],
-            "note": "Methodology: estimated real sales = max(sales per network) × 1.1.",
-        }
+        return empty
 
     by_prod_rmn = (
         df.groupby(["product_name", "rmn"])["sales_eur"].sum().reset_index()
@@ -605,44 +664,43 @@ def double_counting_audit(df: pd.DataFrame) -> Dict[str, Any]:
     pivot = by_prod_rmn.pivot(index="product_name", columns="rmn", values="sales_eur").fillna(0)
 
     total_attributed = 0.0
-    total_real = 0.0
+    total_real = 0.0        # point estimate of real sales
+    total_real_low = 0.0    # high-overlap bound (real = max per SKU)
     per_product: List[Dict[str, Any]] = []
     per_rmn_attr: Dict[str, float] = {}
 
     for sku in pivot.index:
         row = pivot.loc[sku]
-        total_row = float(row.sum())
+        est = _estimate_real_sales([float(row[r]) for r in row.index], organic_uplift)
+        total_row = est["total"]
         if total_row <= 0:
             continue
-        if (row > 0).sum() < 2:
-            # not a common SKU cross-network — include attribution anyway, but overlap=0
-            real_sku = total_row
-        else:
-            real_sku = float(row.max()) * 1.1
-            real_sku = min(real_sku, total_row)
-        overlap_sku = max(0.0, total_row - real_sku)
         total_attributed += total_row
-        total_real += real_sku
+        total_real += est["point"]
+        total_real_low += est["low"]
         per_product.append({
             "product": sku,
             "total_attributed": round(total_row, 2),
-            "estimated_real": round(real_sku, 2),
-            "overlap": round(overlap_sku, 2),
-            "overlap_pct": round(100 * overlap_sku / total_row, 1) if total_row else 0.0,
+            "estimated_real": round(est["point"], 2),
+            "estimated_real_range": [round(est["low"], 2), round(est["high"], 2)],
+            "overlap": round(est["overlap"], 2),
+            "overlap_pct": round(100 * est["overlap"] / total_row, 1) if total_row else 0.0,
             "sales_by_rmn": {r: round(float(row[r]), 2) for r in row.index if float(row[r]) > 0},
         })
         for r in row.index:
             per_rmn_attr[r] = per_rmn_attr.get(r, 0.0) + float(row[r])
 
     overlap_total = max(0.0, total_attributed - total_real)
+    overlap_total_max = max(0.0, total_attributed - total_real_low)
     overlap_pct = round(100 * overlap_total / total_attributed, 1) if total_attributed else 0.0
+    overlap_pct_max = round(100 * overlap_total_max / total_attributed, 1) if total_attributed else 0.0
 
+    real_share = (total_real / total_attributed) if total_attributed else 1.0
     per_network: List[Dict[str, Any]] = []
     flows: List[Dict[str, Any]] = []
     for rmn, attr in per_rmn_attr.items():
         if attr <= 0:
             continue
-        real_share = (total_real / total_attributed) if total_attributed else 1.0
         real_r = attr * real_share
         overlap_r = attr - real_r
         slug = RMN_TO_SLUG.get(rmn, str(rmn).lower().replace(" ", "_"))
@@ -655,13 +713,11 @@ def double_counting_audit(df: pd.DataFrame) -> Dict[str, Any]:
         })
         flows.append({
             "from": f"{rmn} attributed", "from_slug": slug,
-            "to": "Real sales", "to_kind": "real",
-            "value": round(real_r, 2),
+            "to": "Real sales", "to_kind": "real", "value": round(real_r, 2),
         })
         flows.append({
             "from": f"{rmn} attributed", "from_slug": slug,
-            "to": "Overlap", "to_kind": "overlap",
-            "value": round(overlap_r, 2),
+            "to": "Overlap", "to_kind": "overlap", "value": round(overlap_r, 2),
         })
 
     per_network.sort(key=lambda x: -x["attributed"])
@@ -670,14 +726,17 @@ def double_counting_audit(df: pd.DataFrame) -> Dict[str, Any]:
     return {
         "total_attributed": round(total_attributed, 2),
         "estimated_real": round(total_real, 2),
+        "estimated_real_low": round(total_real_low, 2),
+        "estimated_real_high": round(total_attributed, 2),
         "overlap_amount": round(overlap_total, 2),
+        "overlap_amount_max": round(overlap_total_max, 2),
         "overlap_pct": overlap_pct,
+        "overlap_pct_max": overlap_pct_max,
+        "organic_uplift": organic_uplift,
         "per_product": per_product,
         "per_network": per_network,
         "flows": flows,
-        "note": ("Methodology: estimated real sales = max(sales per network) × 1.1 on "
-                 "common SKUs. Defensible assumption — to be validated with third-party "
-                 "panel data (Wakoopa, Nielsen, Kantar Worldpanel)."),
+        "note": _DBL_NOTE,
     }
 
 
