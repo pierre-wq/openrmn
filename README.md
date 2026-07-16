@@ -18,6 +18,12 @@ arbitrator to reconcile them. In Skai's 2026 state-of-retail-media survey,
 openRMN is the third-party layer that consolidates, normalizes and audits
 those self-reported figures so the buyer — not the seller — owns the truth.
 
+openRMN attacks the *first* half of that problem: de-duplicating and
+stress-testing self-reported attribution across networks. It is **not** an
+incrementality engine on its own — true incrementality needs a controlled test
+(geo-holdout, on the roadmap) or a third-party panel. openRMN tells you which
+declared numbers to distrust and by how much; it does not yet prove causal lift.
+
 ## Features (v0.7)
 
 - Multi-RMN connectors : Amazon Ads (real + mock), Criteo Retail Media (mock), Unlimitail (mock)
@@ -48,8 +54,11 @@ score = 0.30 · internal_consistency
 
 - **internal_consistency** = `clamp(100 − CV(ROAS_daily) × 100, 0, 100)` — stability
   of the network's own reported ROAS over the period. High variance = low score.
-- **cross_network_convergence** = `100 × Σ(1 − |share_i − 1/N| / (1/N)) · total_i  /  Σ total_i`
-  on SKUs common to ≥ 2 networks. A network that over-attributes vs. peers scores low.
+- **cross_network_convergence** = sales-weighted `100 × Σ(1 − |sales_share − clicks_share|) · total_i / Σ total_i`
+  on SKUs common to ≥ 2 networks. Each network's share of attributed sales is compared to its
+  share of clicks (a proxy for real exposure), **not** to an arbitrary `1/N` "fair share" — so a
+  network that genuinely performs better is not penalised, only one claiming far more sales-share
+  than its click-share is.
 - **methodology_transparency** = static score from public disclosure (Amazon=90, Criteo=70,
   Unlimitail=60 by default).
 - **data_freshness** = 100 if ingested <24h ago, linearly decays to 0 at 7+ days.
@@ -74,24 +83,30 @@ window (defensible approximation, to be validated against panel data).
 
 ### Double-counting audit
 
-For each SKU common to ≥ 2 networks :
+For each SKU common to ≥ 2 networks, real deduplicated sales are **bounded**, not
+guessed with false precision :
 
 ```
-total_attributed = Σ sales_per_rmn
-estimated_real   = max(sales_per_rmn) × 1.1
-overlap          = max(0, total_attributed − estimated_real)
+lower_bound (max overlap)  = max(sales_per_rmn)   # peers fully double-count the leader
+upper_bound (zero overlap) = Σ sales_per_rmn      # every attribution is incremental
+point_estimate             = clamp(max(sales_per_rmn) × (1 + organic_uplift), lower, upper)
 ```
 
-Per-network allocation is proportional :
+We report the **range** (`estimated_real_low` / `estimated_real_high`) and both a
+point (`overlap_amount`) and worst-case (`overlap_amount_max`) over-attribution.
+`organic_uplift` defaults to `0.10`. Per-network allocation is proportional :
 
 ```
-real_rmn    = sales_rmn × (estimated_real / total_attributed)
+real_rmn    = sales_rmn × (total_real / total_attributed)
 overlap_rmn = sales_rmn − real_rmn
 ```
 
-Hypothesis : the most declarative network is closest to ground truth, +10% covers
-uncaptured organic sales. To be validated with third-party panel data (Wakoopa,
-Nielsen, Kantar Worldpanel).
+Hypothesis : the most declarative network is closest to ground truth, `+organic_uplift`
+covers sales influenced without a logged interaction. This is an **explicit, auditable
+assumption, not a measurement** — the true figure lives somewhere in the reported range.
+Point-level ground truth requires third-party panel data (Wakoopa, NielsenIQ, Kantar
+Worldpanel). The same estimator backs the per-product drill-down, so figures reconcile
+across the app.
 
 → Source : [`double_counting_audit()`](./agent.py).
 
